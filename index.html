@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>茶魚植境：我的都市尋寶生活 (Voxel 積木立體風格)</title>
+    <title>茶魚植境：我的都市尋寶生活 (Voxel 立體積木風格館)</title>
     <!-- 引入 Tailwind CSS 與 Google Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -27,7 +27,7 @@
             <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-600 to-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-inner">茶</div>
             <div>
                 <h1 class="text-white font-bold text-sm tracking-wide">茶魚植境：我的都市尋寶生活</h1>
-                <p class="text-amber-400 text-xs flex items-center gap-2"><span>✨ Voxel 空間特派員</span> <span>💰 金幣: <strong id="coin-count">12,500</strong> G</span></p>
+                <p class="text-amber-400 text-xs flex items-center gap-2"><span>✨ Voxel 積木特派員</span> <span>💰 金幣: <strong id="coin-count">12,500</strong> G</span></p>
             </div>
         </div>
         <div class="flex gap-2 pointer-events-auto">
@@ -52,7 +52,7 @@
     <div class="absolute bottom-6 right-6 z-10 pointer-events-none">
         <div class="glass-panel px-4.5 py-3 rounded-2xl text-gray-300 text-xs pointer-events-auto shadow-2xl flex items-center gap-3">
             <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>💡 <strong>操作說明</strong>：使用左下角<strong>虛擬搖桿</strong>或 <strong>WASD</strong> 移動，滑鼠拖曳可<strong>自由 360 度旋轉視角</strong>。</span>
+            <span>💡 <strong>Voxel 操控說明</strong>：使用左下角<strong>虛擬搖桿</strong>或 <strong>WASD</strong> 移動積木人偶，滑鼠拖曳可<strong>自由 360 度旋轉視角</strong>檢視積木細節。</span>
         </div>
     </div>
 
@@ -137,7 +137,7 @@
         </div>
     </div>
 
-    <!-- Voxel 體素立體風格與互動核心邏輯 -->
+    <!-- Voxel 體素立體積木與互動核心邏輯 -->
     <script>
         let scene, camera, renderer, player, controls;
         let keys = { w: false, a: false, s: false, d: false };
@@ -162,7 +162,7 @@
             renderer.shadowMap.enabled = true;
             container.appendChild(renderer.domElement);
 
-            // 3. 視角控制器 (完全解鎖 360 度旋轉)
+            // 3. 視角控制器 (解鎖 360 度旋轉)
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
@@ -178,7 +178,7 @@
             dirLight.castShadow = true;
             scene.add(dirLight);
 
-            // 5. 3D 棋盤格/木質地板
+            // 5. 木質地板
             const floorGeo = new THREE.PlaneGeometry(100, 100);
             const floorMat = new THREE.MeshStandardMaterial({ color: 0x1f140e, roughness: 0.4 });
             const floor = new THREE.Mesh(floorGeo, floorMat);
@@ -186,13 +186,13 @@
             floor.receiveShadow = true;
             scene.add(floor);
 
-            // 6. 建立 Voxel 積木風格主角群組
+            // 6. 建立真正的 Voxel 積木立體主角人物
             player = new THREE.Group();
             scene.add(player);
-            createVoxelPlayer();
+            buildVoxelCharacter();
 
-            // 7. 建立 Voxel 積木風格建築、展示架與茶具商品
-            createVoxelEnvironment();
+            // 7. 建立 Voxel 積木茶館建築與精細茶具積木
+            buildVoxelArchitecture();
 
             // 事件監聽
             window.addEventListener('resize', onWindowResize);
@@ -203,72 +203,66 @@
             animate();
         }
 
-        // 用積木方塊拼湊出立體主角
-        function createVoxelPlayer() {
-            const matBody = new THREE.MeshStandardMaterial({ color: 0xb45309 });
-            const matHead = new THREE.MeshStandardMaterial({ color: 0xfde68a });
-            const matCap = new THREE.MeshStandardMaterial({ color: 0x059669 });
+        // 用多個積木方塊精確拼湊出立體人物（Voxel Character）
+        function buildVoxelCharacter() {
+            const matBody = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.3 }); // 棕色夾克
+            const matPants = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.4 }); // 深藍褲子
+            const matHead = new THREE.MeshStandardMaterial({ color: 0xfde68a, roughness: 0.2 });  // 膚色頭部
+            const matCap = new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.3 });   // 綠色潮帽
 
-            // 身體方塊
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, 0.6), matBody);
-            body.position.y = 0.6;
-            body.castShadow = true;
-            player.add(body);
+            // 雙腿
+            const leftLeg = new THREE.Mesh(new Box(0.25, 0.6, 0.25), matPants);
+            leftLeg.position.set(-0.15, 0.3, 0); leftLeg.castShadow = true; player.add(leftLeg);
 
-            // 頭部方塊
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), matHead);
-            head.position.y = 1.55;
-            head.castShadow = true;
-            player.add(head);
+            const rightLeg = new THREE.Mesh(new Box(0.25, 0.6, 0.25), matPants);
+            rightLeg.position.set(0.15, 0.3, 0); rightLeg.castShadow = true; player.add(rightLeg);
 
-            // 帽子方塊
-            const cap = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.25, 0.8), matCap);
-            cap.position.y = 2.0;
-            cap.castShadow = true;
-            player.add(cap);
+            // 軀幹 (身體)
+            const torso = new THREE.Mesh(new Box(0.6, 0.8, 0.4), matBody);
+            torso.position.set(0, 1.0, 0); torso.castShadow = true; player.add(torso);
+
+            // 頭部
+            const head = new THREE.Mesh(new Box(0.5, 0.5, 0.5), matHead);
+            head.position.set(0, 1.65, 0); head.castShadow = true; player.add(head);
+
+            // 帽子
+            const cap = new THREE.Mesh(new Box(0.55, 0.2, 0.6), matCap);
+            cap.position.set(0, 1.95, 0.05); cap.castShadow = true; player.add(cap);
         }
 
-        // 用積木方塊拼湊出茶館建築與茶具商品
-        function createVoxelEnvironment() {
-            // 背景木質牆面
-            const wallMat = new THREE.MeshStandardMaterial({ color: 0x140f0a });
-            const wall = new THREE.Mesh(new THREE.BoxGeometry(40, 14, 1), wallMat);
-            wall.position.set(0, 7, -14);
-            scene.add(wall);
+        // 簡化 Box 建立輔助函式
+        function Box(w, h, d) { return new THREE.BoxGeometry(w, h, d); }
+
+        // 用積木方塊拼湊出建築展架與精緻茶壺茶杯
+        function buildVoxelArchitecture() {
+            // 背景木紋主牆
+            const wall = new THREE.Mesh(new Box(40, 14, 1), new THREE.MeshStandardMaterial({ color: 0x140f0a }));
+            wall.position.set(0, 7, -14); scene.add(wall);
 
             // 大型生態大魚缸
             const tank = new THREE.Mesh(
-                new THREE.BoxGeometry(6.5, 3.8, 2.2),
+                new Box(6.5, 3.8, 2.2),
                 new THREE.MeshPhysicalMaterial({ color: 0x047857, transmission: 0.9, opacity: 1, transparent: true, roughness: 0.05, ior: 1.5 })
             );
-            tank.position.set(0, 1.9, -9);
-            scene.add(tank);
+            tank.position.set(0, 1.9, -9); scene.add(tank);
 
-            // 兩側多層次積木展示架與茶具積木
+            // 兩側展示架與積木茶具商品
             [-8.5, 8.5].forEach(xPos => {
                 for(let level = 1; level <= 3; level++) {
-                    const shelf = new THREE.Mesh(
-                        new THREE.BoxGeometry(3.8, 0.2, 1.6),
-                        new THREE.MeshStandardMaterial({ color: 0x2d1a0e })
-                    );
-                    shelf.position.set(xPos, level * 1.4, -7);
-                    scene.add(shelf);
+                    // 層板積木
+                    const shelf = new THREE.Mesh(new Box(3.8, 0.18, 1.6), new THREE.MeshStandardMaterial({ color: 0x2d1a0e }));
+                    shelf.position.set(xPos, level * 1.4, -7); scene.add(shelf);
 
-                    // 用小方塊拼出茶壺形狀
-                    const teapotBody = new THREE.Mesh(
-                        new THREE.BoxGeometry(0.5, 0.4, 0.5),
-                        new THREE.MeshStandardMaterial({ color: 0x9a3412 })
-                    );
-                    teapotBody.position.set(xPos - 0.6, level * 1.4 + 0.3, -7);
-                    scene.add(teapotBody);
+                    // 用積木拼湊出立體茶壺 (壺身 + 壺嘴 + 壺把)
+                    const teapotBody = new THREE.Mesh(new Box(0.4, 0.35, 0.4), new THREE.MeshStandardMaterial({ color: 0x9a3412 }));
+                    teapotBody.position.set(xPos - 0.5, level * 1.4 + 0.26, -7); scene.add(teapotBody);
 
-                    // 瓷杯小方塊
-                    const cup = new THREE.Mesh(
-                        new THREE.BoxGeometry(0.25, 0.3, 0.25),
-                        new THREE.MeshStandardMaterial({ color: 0xf3f4f6 })
-                    );
-                    cup.position.set(xPos + 0.6, level * 1.4 + 0.25, -7);
-                    scene.add(cup);
+                    const teapotSpout = new THREE.Mesh(new Box(0.2, 0.1, 0.1), new THREE.MeshStandardMaterial({ color: 0x9a3412 }));
+                    teapotSpout.position.set(xPos - 0.75, level * 1.4 + 0.3, -7); scene.add(teapotSpout);
+
+                    // 積木瓷杯
+                    const cup = new THREE.Mesh(new Box(0.22, 0.3, 0.22), new THREE.MeshStandardMaterial({ color: 0xf3f4f6 }));
+                    cup.position.set(xPos + 0.6, level * 1.4 + 0.25, -7); scene.add(cup);
                 }
             });
         }
@@ -340,7 +334,7 @@
             player.position.x += moveX;
             player.position.z += moveZ;
 
-            // 相機平滑跟隨主角，同時允許 OrbitControls 自由 360 度旋轉
+            // 相機平滑跟隨主角，同時允許 OrbitControls 自由旋轉
             controls.target.copy(player.position);
             controls.target.y += 1.0;
 
@@ -385,7 +379,7 @@
             });
             if(zone === 'store') {
                 player.position.set(0, 0, 0);
-                showToast("🏮 已切換至 3D 積木旗艦茶館");
+                showToast("🏮 已切換至 3D Voxel 積木茶館");
             } else if(zone === 'warehouse') {
                 player.position.set(4, 0, -5);
                 showToast("🐟 已切換至 3D 水族養魚倉庫");
