@@ -2,62 +2,62 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>《茶魚植境：都市探索手遊版》3D 開放世界</title>
+<title>《茶魚植境：都市探索手遊版》3D 開放世界美學版</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-:root{--gold:#e6b347;--grn:#3b6e4c;--moss:#529e67;--aqua:#2ca8c2}
+:root{--gold:#d99b26;--grn:#3b6e4c;--moss:#529e67;--aqua:#2ca8c2}
 *{box-sizing:border-box;margin:0;padding:0;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;user-select:none;-webkit-user-select:none}
-body,html{width:100%;height:100%;overflow:hidden;background:#141a14;color:#f5efe6}
+body,html{width:100%;height:100%;overflow:hidden;background:#c8e6c9;color:#2c221b}
 #canvas-box{position:absolute;inset:0;z-index:1}
 
-/* 頂部極簡沉浸式狀態列 */
-.top-hud{position:absolute;top:12px;left:12px;right:12px;z-index:10;display:flex;justify-content:space-between;align-items:center;background:rgba(20,26,20,0.75);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:8px 14px;color:#fff}
-.hud-group{display:flex;gap:10px;align-items:center;font-size:.85rem}
-.hud-pill{background:rgba(255,255,255,0.1);padding:4px 10px;border-radius:8px}
-.hud-pill b{color:var(--gold)}
+/* 頂部質感半透明狀態列 */
+.top-hud{position:absolute;top:14px;left:14px;right:14px;z-index:10;display:flex;justify-content:space-between;align-items:center;background:rgba(255,253,250,0.88);backdrop-filter:blur(12px);border:1px solid rgba(180,150,120,0.3);border-radius:14px;padding:10px 18px;box-shadow:0 8px 24px rgba(0,0,0,0.06)}
+.hud-group{display:flex;gap:12px;align-items:center;font-size:.88rem}
+.hud-pill{background:rgba(232,213,183,0.3);padding:5px 12px;border-radius:8px;border:1px solid rgba(180,150,120,0.25)}
+.hud-pill b{color:#b37d14}
 
-/* 左下角：虛擬搖桿 */
-#joystick-zone{position:absolute;bottom:25px;left:25px;width:120px;height:120px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.25);border-radius:50%;z-index:10;touch-action:none;display:flex;justify-content:center;align-items:center}
-#joystick-knob{width:50px;height:50px;background:rgba(230,179,71,0.85);border-radius:50%;position:absolute;box-shadow:0 4px 12px rgba(0,0,0,0.4);pointer-events:none}
+/* 左下角：精美虛擬搖桿 */
+#joystick-zone{position:absolute;bottom:30px;left:30px;width:130px;height:130px;background:rgba(255,255,255,0.35);border:2px solid rgba(180,150,120,0.4);border-radius:50%;z-index:10;touch-action:none;display:flex;justify-content:center;align-items:center;box-shadow:0 8px 20px rgba(0,0,0,0.08)}
+#joystick-knob{width:54px;height:54px;background:linear-gradient(135deg,#e6b347,#b88214);border-radius:50%;position:absolute;box-shadow:0 4px 12px rgba(0,0,0,0.25);pointer-events:none}
 
-/* 右下角：互動動作提示按鈕 */
-#action-btn{position:absolute;bottom:35px;right:30px;width:75px;height:75px;background:linear-gradient(135deg,#e6b347,#b88214);color:#fff;border-radius:50%;border:none;font-weight:700;font-size:.9rem;z-index:10;box-shadow:0 6px 20px rgba(0,0,0,0.5);cursor:pointer;display:none;align-items:center;justify-content:center;text-align:center}
+/* 右下角：互動動作按鈕 */
+#action-btn{position:absolute;bottom:40px;right:35px;width:82px;height:82px;background:linear-gradient(135deg,#3b6e4c,#24583c);color:#fff;border-radius:50%;border:none;font-weight:700;font-size:.95rem;z-index:10;box-shadow:0 8px 24px rgba(59,110,76,0.4);cursor:pointer;display:none;align-items:center;justify-content:center;text-align:center;transition:transform 0.1s}
+#action-btn:active{transform:scale(0.92)}
 
 /* 左上角：小地圖雷達 */
-.minimap{position:absolute;top:70px;left:12px;width:100px;height:100px;background:rgba(0,0,0,0.5);border:2px solid rgba(255,255,255,0.3);border-radius:50%;z-index:10;overflow:hidden;display:flex;justify-content:center;align-items:center}
-.minimap-dot{width:8px;height:8px;background:#ff4d4f;border-radius:50%;position:absolute}
+.minimap{position:absolute;top:76px;left:14px;width:105px;height:105px;background:rgba(255,253,250,0.85);border:2px solid rgba(180,150,120,0.3);border-radius:50%;z-index:10;overflow:hidden;display:flex;justify-content:center;align-items:center;box-shadow:0 6px 16px rgba(0,0,0,0.08)}
+.minimap-dot{width:9px;height:9px;background:#c5221f;border-radius:50%;position:absolute;box-shadow:0 0 6px #c5221f}
 
-/* 提示文字 */
-.world-hint{position:absolute;top:70px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.65);color:#ffd666;padding:6px 14px;border-radius:20px;font-size:.82rem;z-index:10;border:1px solid rgba(230,179,71,0.4);pointer-events:none;text-align:center}
+/* 畫面中央提示 */
+.world-hint{position:absolute;top:76px;left:50%;transform:translateX(-50%);background:rgba(255,253,250,0.9);color:#b37d14;padding:7px 16px;border-radius:20px;font-size:.85rem;font-weight:600;z-index:10;border:1px solid rgba(180,150,120,0.3);pointer-events:none;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,0.05)}
 
 /* 通用彈出視窗 */
-.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);display:none;justify-content:center;align-items:center;padding:16px}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(44,34,27,0.55);backdrop-filter:blur(6px);display:none;justify-content:center;align-items:center;padding:16px}
 .modal.open{display:flex}
-.mbox{width:100%;max-width:920px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden;background:#1c1613;border:1px solid var(--gold);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.8)}
-.mhead{padding:14px 18px;background:#2a2019;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1)}
-.mbody{padding:18px;overflow-y:auto;flex:1}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px;margin-top:10px}
-.card{background:#261d17;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;position:relative}
+.mbox{width:100%;max-width:940px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;background:#fffaf3;border:1px solid var(--gold);border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,0.18)}
+.mhead{padding:16px 22px;background:#f3e8dc;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(180,150,120,0.2)}
+.mbody{padding:20px;overflow-y:auto;flex:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px}
+.card{background:#fff;border:1px solid rgba(180,150,120,0.25);border-radius:12px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;position:relative;box-shadow:0 4px 12px rgba(0,0,0,0.03)}
 .card:hover{border-color:var(--gold)}
-.badge{position:absolute;top:8px;right:8px;background:#234730;color:#8ce6a5;font-size:.68rem;padding:2px 7px;border-radius:8px}
-#toast{position:fixed;top:78px;right:20px;z-index:99;background:#203828;border:1px solid var(--moss);color:#fff;padding:10px 16px;border-radius:9px;font-size:.85rem;display:none;max-width:330px;box-shadow:0 8px 25px rgba(0,0,0,0.5)}
+#toast{position:fixed;top:84px;right:20px;z-index:99;background:#3b6e4c;color:#fff;padding:12px 18px;border-radius:10px;font-size:.88rem;box-shadow:0 8px 24px rgba(0,0,0,0.15);display:none;max-width:340px}
 </style>
 </head>
 <body>
 <div id="canvas-box"></div>
 <div id="toast"></div>
 
-<!-- 頂部狀態列 -->
+<!-- 頂部質感狀態列 -->
 <header class="top-hud">
   <div class="hud-group">
-    <span>🍵🐟🌱 <b>茶魚植境：開放世界</b></span>
+    <span>🍵🐟🌱 <b>茶魚植境：開放世界探索</b></span>
     <span class="hud-pill" id="hud-lv">Lv.1 新居民</span>
   </div>
   <div class="hud-group">
     <div class="hud-pill">🪙 金幣: <b id="hud-coin">500</b></div>
     <div class="hud-pill">✨ 聲望: <b id="hud-rep">10</b></div>
-    <button style="background:var(--gold);border:none;padding:5px 12px;border-radius:6px;font-weight:700;cursor:pointer" onclick="openShop('coin')">🛒 開啟商城</button>
-    <button style="background:#2ca8c2;border:none;padding:5px 10px;border-radius:6px;font-weight:700;cursor:pointer;color:#fff" onclick="downloadSelf()">💾 下載網頁</button>
+    <button style="background:var(--gold);color:#fff;border:none;padding:6px 14px;border-radius:8px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(217,155,38,0.3)" onclick="openShop('coin')">🛒 開啟商城</button>
+    <button style="background:#2ca8c2;color:#fff;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer" onclick="downloadSelf()">💾 下載網頁</button>
   </div>
 </header>
 
@@ -65,7 +65,7 @@ body,html{width:100%;height:100%;overflow:hidden;background:#141a14;color:#f5efe
 <div class="minimap"><div class="minimap-dot" id="mm-dot"></div></div>
 
 <!-- 畫面中央提示 -->
-<div class="world-hint" id="world-hint">🕹️ 請使用左下角虛擬搖桿移動，或用手指滑動螢幕旋轉視角！走到建築物前即可互動！</div>
+<div class="world-hint" id="world-hint">🕹️ 使用左下角虛擬搖桿在綠意草地散步探索，靠近建築物地標即可互動！</div>
 
 <!-- 左下角虛擬搖桿 -->
 <div id="joystick-zone"><div id="joystick-knob"></div></div>
@@ -75,58 +75,58 @@ body,html{width:100%;height:100%;overflow:hidden;background:#141a14;color:#f5efe
 
 <!-- 商城 Modal -->
 <div class="modal" id="m-shop"><div class="mbox">
-  <div class="mhead"><h3 style="color:var(--gold)">🛒 茶魚植境・102品項旗艦商城</h3><button style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer" onclick="closeM('m-shop')">✕</button></div>
+  <div class="mhead"><h3 style="color:var(--gold)">🛒 茶魚植境・102品項旗艦商城</h3><button style="background:none;border:none;font-size:1.2rem;cursor:pointer" onclick="closeM('m-shop')">✕</button></div>
   <div class="mbody">
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <button style="flex:1;padding:8px;background:#3b6e4c;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer" onclick="switchMode('coin')">🪙 遊戲金幣購買</button>
-      <button style="flex:1;padding:8px;background:#24583c;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer" onclick="switchMode('real')">💳 真錢商城 (VIP 85折)</button>
+    <div style="display:flex;gap:10px;margin-bottom:12px">
+      <button style="flex:1;padding:10px;background:#3b6e4c;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="switchMode('coin')">🪙 遊戲金幣購買</button>
+      <button style="flex:1;padding:10px;background:#24583c;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="switchMode('real')">💳 真錢商城 (VIP 85折)</button>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
-      <button style="padding:5px 10px;background:#333;color:#fff;border:none;border-radius:15px;cursor:pointer" onclick="setCat('ALL',this)">全部(102)</button>
-      <button style="padding:5px 10px;background:#333;color:#fff;border:none;border-radius:15px;cursor:pointer" onclick="setCat('TEA',this)">🍵 梨山茶(22)</button>
-      <button style="padding:5px 10px;background:#333;color:#fff;border:none;border-radius:15px;cursor:pointer" onclick="setCat('WARE',this)">🫖 宜興茶具(22)</button>
-      <button style="padding:5px 10px;background:#333;color:#fff;border:none;border-radius:15px;cursor:pointer" onclick="setCat('PLANT',this)">🌱 苔蘚缸/螢光魚瓶/發財樹(22)</button>
-      <button style="padding:5px 10px;background:#333;color:#fff;border:none;border-radius:15px;cursor:pointer" onclick="setCat('FISH',this)">🐟 倉庫觀賞魚/紅龍(24)</button>
-      <button style="padding:5px 10px;background:#333;color:#fff;border:none;border-radius:15px;cursor:pointer" onclick="setCat('BUNDLE',this)">🎁 組合包(12)</button>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+      <button style="padding:6px 12px;background:#eee;border:none;border-radius:15px;cursor:pointer;font-weight:600" onclick="setCat('ALL',this)">全部(102)</button>
+      <button style="padding:6px 12px;background:#eee;border:none;border-radius:15px;cursor:pointer;font-weight:600" onclick="setCat('TEA',this)">🍵 梨山茶(22)</button>
+      <button style="padding:6px 12px;background:#eee;border:none;border-radius:15px;cursor:pointer;font-weight:600" onclick="setCat('WARE',this)">🫖 宜興茶具(22)</button>
+      <button style="padding:6px 12px;background:#eee;border:none;border-radius:15px;cursor:pointer;font-weight:600" onclick="setCat('PLANT',this)">🌱 苔蘚缸/螢光魚瓶/發財樹(22)</button>
+      <button style="padding:6px 12px;background:#eee;border:none;border-radius:15px;cursor:pointer;font-weight:600" onclick="setCat('FISH',this)">🐟 倉庫觀賞魚/紅龍(24)</button>
+      <button style="padding:6px 12px;background:#eee;border:none;border-radius:15px;cursor:pointer;font-weight:600" onclick="setCat('BUNDLE',this)">🎁 組合包(12)</button>
     </div>
     <div class="grid" id="p-grid"></div>
   </div>
 </div></div>
 
 <!-- 塔羅 Modal -->
-<div class="modal" id="m-tarot"><div class="mbox" style="max-width:800px">
-  <div class="mhead"><h3 style="color:var(--gold)">🔮 街角塔羅占卜攤 — 觸發 NPC 委託</h3><button style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer" onclick="closeM('m-tarot')">✕</button></div>
+<div class="modal" id="m-tarot"><div class="mbox" style="max-width:820px">
+  <div class="mhead"><h3 style="color:var(--gold)">🔮 街角塔羅占卜攤 — 觸發 NPC 委託</h3><button style="background:none;border:none;font-size:1.2rem;cursor:pointer" onclick="closeM('m-tarot')">✕</button></div>
   <div class="mbody"><div class="grid" id="t-grid"></div></div>
 </div></div>
 
 <!-- 直播 Modal -->
-<div class="modal" id="m-live"><div class="mbox" style="max-width:680px">
-  <div class="mhead" style="background:#4a1818"><h3 style="color:#ff7875">🔴 官方直播間 & 互動中心</h3><button style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer" onclick="closeM('m-live')">✕</button></div>
+<div class="modal" id="m-live"><div class="mbox" style="max-width:700px">
+  <div class="mhead" style="background:#fce8e6"><h3 style="color:#c5221f">🔴 官方直播間 & 互動中心</h3><button style="background:none;border:none;font-size:1.2rem;cursor:pointer" onclick="closeM('m-live')">✕</button></div>
   <div class="mbody">
-    <p style="background:#261b16;padding:12px;border-radius:8px;font-size:.85rem;line-height:1.5;margin-bottom:12px">
+    <p style="background:#fff;padding:14px;border-radius:10px;font-size:.9rem;line-height:1.5;margin-bottom:14px;border:1px solid #ddd">
       🎙️ <b>店長直播中：</b>「歡迎來到茶魚植境線上直播！今天開箱倉庫的血豔辣椒紅龍魚、超會生小魚的孔雀航母、透明罩苔蘚缸與宜興紫砂壺泡梨山茶！點擊下方參與搶紅包！」
     </p>
-    <div style="background:#161210;padding:12px;border-radius:8px;margin-bottom:12px">
-      <b style="color:var(--gold);font-size:.88rem" id="lz-q"></b>
-      <div id="lz-opts" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+    <div style="background:#fff;padding:14px;border-radius:10px;border:1px solid #ddd;margin-bottom:14px">
+      <b style="color:var(--gold);font-size:.92rem" id="lz-q"></b>
+      <div id="lz-opts" style="display:flex;flex-direction:column;gap:8px;margin-top:10px"></div>
     </div>
-    <button style="width:100%;padding:10px;background:var(--grn);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="liveBonus()">🧧 領取直播紅包 (+$200)</button>
+    <button style="width:100%;padding:12px;background:var(--grn);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="liveBonus()">🧧 領取直播紅包 (+$200)</button>
   </div>
 </div></div>
 
 <!-- 小窩養成 Modal -->
-<div class="modal" id="m-loft"><div class="mbox" style="max-width:700px">
-  <div class="mhead"><h3 style="color:var(--gold)">🏡 我的北歐風木質小窩 — 養壺與繁殖小魚</h3><button style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer" onclick="closeM('m-loft')">✕</button></div>
-  <div class="mbody" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+<div class="modal" id="m-loft"><div class="mbox" style="max-width:720px">
+  <div class="mhead"><h3 style="color:var(--gold)">🏡 我的北歐風木質小窩 — 養壺與繁殖小魚</h3><button style="background:none;border:none;font-size:1.2rem;cursor:pointer" onclick="closeM('m-loft')">✕</button></div>
+  <div class="mbody" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px">
     <div class="card">
-      <h4 style="color:#2ca8c2">🐟 孔雀航母繁殖缸</h4>
-      <p style="font-size:.78rem;color:#ccc;margin:6px 0">待售新生小魚：<b id="l-fry" style="color:var(--gold)">0</b> 尾</p>
-      <button style="padding:8px;background:var(--aqua);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer" onclick="sellFry()">💰 賣小魚給水族館</button>
+      <h4 style="color:#0277bd">🐟 孔雀航母繁殖缸</h4>
+      <p style="font-size:.8rem;color:#666;margin:8px 0">待售新生小魚：<b id="l-fry" style="color:var(--gold)">0</b> 尾</p>
+      <button style="padding:9px;background:var(--aqua);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="sellFry()">💰 賣小魚給水族館</button>
     </div>
     <div class="card">
       <h4 style="color:var(--gold)">🫖 宜興紫砂養壺席</h4>
-      <p style="font-size:.78rem;color:#ccc;margin:6px 0">壺身包漿溫潤度：<b id="l-pat" style="color:var(--gold)">10%</b></p>
-      <button style="padding:8px;background:var(--grn);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer" onclick="brewTea()">🍵 泡梨山茶養壺</button>
+      <p style="font-size:.8rem;color:#666;margin:8px 0">壺身包漿溫潤度：<b id="l-pat" style="color:var(--gold)">10%</b></p>
+      <button style="padding:9px;background:var(--grn);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="brewTea()">🍵 泡梨山茶養壺</button>
     </div>
   </div>
 </div></div>
@@ -137,7 +137,7 @@ const RAW_DB = {
   TEA: ["梨山日常冷熱泡原葉立體茶包(20入)|300|300|梨山原片切製三角茶包|恢復+30體力","梨山迎香金萱原葉茶包(20入)|280|280|天然奶香桂花香|恢復+25體力","梨山蜜香紅茶包(20入)|320|350|小綠葉蟬著涎熟果蜜香|恢復+35體力","古法炭焙凍頂烏龍茶包|300|300|龍眼木炭慢火烘焙韻味醇厚|恢復+30體力","梨山甘露翠玉冷泡茶包|480|500|冰鎮高山甘甜|自動回體力","梨山不知春冬片二兩罐|380|420|冬季低溫香氣奔放|品味+10","環山手採高山青茶四兩|900|1000|海拔1750m茶湯蜜綠|品味+18","思源埡口迷霧高冷春茶|1100|1250|風口雲霧繚繞茶氣清冽|品味+22","新佳陽手採軟枝烏龍|1200|1500|果膠豐富水蜜桃甜香|聲望+25","松茂三分火輕焙烏龍|1380|1680|微火烘焙添溫潤米香|品味+28","翠巒北線極品冬片|1500|1800|向陽坡葉肉肥厚入口即化|品味+32","武陵雪水灌溉金萱烏龍|1800|2200|純淨溪水灌溉奶香交融|品味+38","天府著涎貴妃烏龍|2400|2800|荔枝蜜香層次豐富|品味+45","碧綠溪2100m高冷春茶|2600|3200|日夜溫差大生津持久|品味+52","翠峰高海拔手採冬茶|3200|3800|水路細膩冷香沉穩|品味+60","大禹嶺交界95K雲端烏龍|3600|4200|原始森林芬多精香|品味+68","福壽山極品高冷春茶|4500|5200|指標茶區花香冷冽|聲望+80","華崗水源頭冷韻冬茶|5200|6000|極高海拔茶湯滑軟如絲|聲望+95","20年老甕藏梨山老茶|6800|8000|歲月封甕藥香梅香迷人|聲望+120","翠巒正叢頭水春茶一斤|8800|10000|頭水鮮芽大份量|聲望+140","華崗霜降凝香頂級冬茶|12800|15000|高山寒霜果膠濃稠|聲望+180","梨山特等獎比賽茶王|16800|22000|奪冠之作封籤典藏|聲望+250"],
   WARE: ["胡桃木竹編隔熱茶墊|280|320|簡約木質保護桌面|品味+5","蘇州宋錦養壺茶墊|350|400|織錦典雅不怕磕碰|養壺加速+15%","小葉紫檀蓮花茶墊|680|800|沉水紫檀越用越亮|聲望+15","宜興招財噴水金蟾茶寵|450|500|熱茶淋洗吐水冒泡|額外+$40金幣","段泥霸氣龍魚茶寵|580|650|茶魚雙修造型精緻|聲望+20","黑檀木六君子茶道組|880|1000|功夫茶必備行頭|品味+18","高硼硅胡桃木公道杯|550|600|透明欣賞梨山綠茶湯|品味+12","景德鎮甜白瓷品茗杯4入|680|800|胎薄如蟬翼潔白如玉|品味+16","青花瓷纏枝蓮主人杯|980|1150|傳統手繪對飲江湖情|聲望+22","汝窯天青釉開片品茗杯|1280|1500|自然形成金絲鐵線紋|品味+30","德化羊脂玉白瓷鈴鐺杯|1500|1800|溫潤如凝脂美玉|品味+35","建陽建盞曜變油滴杯|1880|2200|高含鐵軟化水質|品味+40","宜興清水泥孟臣水平壺|2200|2600|雙氣孔結構新手寶|聲望+45","宜興趙庄朱泥西施壺|2680|3500|逼熱揚香泡青茶絕配|聲望+55","黃龍山底槽清仿古壺|3600|4200|砂感明顯端莊大器|聲望+65","黃金段泥竹節井欄壺|4200|5000|雙面手工刻繪書法|品味+75","宜興降坡泥容天壺|4800|5600|黃紅共生金砂隱現|品味+85","本山綠泥梨形思亭壺|5600|6500|稀少泥料專泡頂級春茶|品味+95","老紫泥子冶石瓢壺|6800|8500|三角剛勁出水流暢|聲望+110","大紅袍朱泥龍蛋壺|8800|10500|紅如寶石聚熱揚香|品味+135","天青泥歲寒三友報春壺|13800|16000|花貨雕塑栩栩如生|品味+180","陳腐30年底槽清供春壺|22000|28000|鎮店孤品樹癭節逸品|聲望+260"],
   PLANT: ["黃金葛螢光魚共生瓶|380|420|水培淨水附2條螢光魚|被動+$30","富貴竹藍螢光魚瓶|450|500|富貴竹搭配藍光螢光魚|被動+$40","白網紋草綠螢光魚球|480|550|水晶球搭配綠螢光魚|被動+$45","圓葉椒草橘螢光魚瓶|550|620|胡桃木底座橙橘螢光魚|被動+$55","九冠水草火山石紫魚缸|680|780|培菌免換水紫螢光魚|被動+$70","懸浮綠球藻金螢光魚瓶|880|1000|北海道綠球藻金魚共生|被動+$100","膠囊透明罩白髮蘚微景|980|1100|高透光鎖濕度微景觀|品味+22","鐘型罩大灰蘚森林缸|1580|1800|造景師手作松皮石山巒|品味+35","圓頂罩狼尾蕨雨林缸|2280|2800|自給自足微水循環|聲望+50","木質底座溪流苔蘚缸|2980|3500|白砂模擬山澗溪流禪意|聲望+65","鑽石切面捕蟲堇水苔缸|3200|3800|幾何罩開紫花捕蟲堇|品味+70","LED呼吸燈枯山水茶亭|4500|5200|頂部生長燈夜間發光|品味+95","巨蛋瀑布造霧苔蘚缸|6800|8000|旗艦作內建瀑布造霧|聲望+150","桌上型獨木小發財樹|480|550|原木盆綠葉招財首選|賞金永久+3%","五辮編織中型發財樹|1280|1500|五路財神匯聚胡桃木盆|賞金+8%","九宮格落地霸氣發財樹|3200|3800|150cm落地老樁大哥款|賞金+15%","日本海島圓葉竹柏盆景|680|750|避邪招財發財竹柏|品味+18","裂葉龜背芋實木花架|1180|1350|熱帶溫室生命力活力|品味+30","黑釉木紋盆金錢樹|1480|1700|葉如古錢耐旱商務送禮|賞金+10%","上板二岐鹿角蕨碳化板|1880|2200|雄鹿之角掛牆面藝品|品味+45","迎客松真柏舍利幹盆景|2680|3200|蒼勁真柏東方禪意美學|品味+60","百年流木蝴蝶蘭空氣鳳梨|4800|5800|立體植物雕塑孤品|品味+110"],
-  FISH: ["日光燈魚|5|20|銅板價閃耀霓虹光帶|魚缸活力+2","米克斯小孔雀魚|5|20|強健好養新手必買|魚缸活力+2","仙子斑馬魚|10|35|游動極快象徵財源滾滾|魚缸活力+4","米奇魚/紅球魚|10|35|尾根米奇頭討喜可愛|魚缸活力+4","極火蝦/大和米蝦|10|35|天然清潔隊除藻喜氣|魚缸活力+4","五彩基因螢光魚|25|70|單買加進水生植物瓶|魚缸活力+8","黃金青苔鼠/熊貓鼠|30|80|呆萌底棲魚清除殘餌|魚缸活力+10","莫斯科藍純種孔雀魚|50|180|金屬寶藍色尾鰭飄逸|魚缸聲望+15","全紅白子紅眼孔雀魚|50|180|酒紅透亮雙眼極度搶眼|魚缸聲望+15","德系黃尾禮服孔雀魚|50|180|黑燕尾禮服金黃尾鰭|魚缸聲望+18","大耳馬賽克蕾絲孔雀|50|180|胸鰭如象耳蕾絲紋路|魚缸聲望+18","霸氣孔雀航母(爆肚種母)|50|200|超大體型極易爆缸生魚|自動生小魚賣錢","皇家藍尾特級孔雀航母|120|400|一胎產50~80尾小魚|高速生魚","泰系半月鬥魚/國王鬥魚|250|600|展鰭180度色澤華麗|魚缸聲望+28","泰金獅頭/蘭壽金魚|680|1200|獅子頭球形討喜可愛|魚缸聲望+35","珍珠羅漢魚苗|1500|2500|頭頂明顯隆起起頭靈性|魚缸聲望+50","A級元寶血鸚鵡(血玉)|2200|3200|渾圓如紅元寶招財名魚|任務賞金+10%","紅財神血玉(會互動)|3800|5000|通紅赤玉人靠近會聚攏|賞金+15%","賽級帝王血玉皇|6800|8800|手掌大巨型體態紅冠|賞金+20%","皇冠黑白魟魚(滿天星)|12000|15000|絲絨圓盤貼底滑行幽浮|魚缸聲望+150","澳洲星點珍珠龍/銀帶|1800|2800|銀白身軀粉紅星點鱗框|魚缸聲望+55","馬來西亞過背金龍魚|18000|22000|金質爬滿鱗片純金金條|魚缸聲望+200","印尼血豔辣椒紅龍魚|58000|45000|附晶片證書赤紅霸氣|聲望+350","帝王血紅龍王(神獸)|128000|99999|萬中選一頂點象徵巨獸|聲望+600"],
+  FISH: ["日光燈魚|5|20|銅板價閃耀霓虹光帶|魚缸活力+2","米克斯小孔雀魚|5|20|強健好養新手必買|魚缸活力+2","仙子斑馬魚|10|35|游動極快象徵財源滾滾|魚缸活力+4","米奇魚/紅球魚|10|35|尾根米奇頭討喜可愛|魚缸活力+4","極火蝦/大和米蝦|10|35|天然清潔隊除藻喜氣|魚缸活力+4","五彩基因螢光魚|25|70|單買加進水生植物瓶|魚缸活力+8","黃金青苔鼠/熊貓鼠|30|80|呆萌底棲魚清除殘餌|魚缸活力+10","莫斯科藍純種孔雀魚|50|180|金屬寶藍色尾鰭飄逸|魚缸聲望+15","全紅白子紅眼孔雀魚|50|180|酒紅透亮雙眼極度搶眼|魚缸聲望+15","德系黃尾禮服孔雀魚|50|180|黑燕尾禮服金黃尾鰭|魚缸聲望+15","大耳馬賽克蕾絲孔雀|50|180|胸鰭如象耳蕾絲紋路|魚缸聲望+18","霸氣孔雀航母(爆肚種母)|50|200|超大體型極易爆缸生魚|自動生小魚賣錢","皇家藍尾特級孔雀航母|120|400|一胎產50~80尾小魚|高速生魚","泰系半月鬥魚/國王鬥魚|250|600|展鰭180度色澤華麗|魚缸聲望+28","泰金獅頭/蘭壽金魚|680|1200|獅子頭球形討喜可愛|魚缸聲望+35","珍珠羅漢魚苗|1500|2500|頭頂明顯隆起起頭靈性|魚缸聲望+50","A級元寶血鸚鵡(血玉)|2200|3200|渾圓如紅元寶招財名魚|任務賞金+10%","紅財神血玉(會互動)|3800|5000|倉庫嚴選通紅赤玉|賞金+15%","賽級帝王血玉皇|6800|8800|手掌大巨型體態紅冠|賞金+20%","皇冠黑白魟魚(滿天星)|12000|15000|絲絨圓盤貼底滑行幽浮|魚缸聲望+150","澳洲星點珍珠龍/銀帶|1800|2800|銀白身軀粉紅星點鱗框|魚缸聲望+55","馬來西亞過背金龍魚|18000|22000|金質爬滿鱗片純金金條|魚缸聲望+200","印尼血豔辣椒紅龍魚|58000|45000|附晶片證書赤紅霸氣|聲望+350","帝王血紅龍王(神獸)|128000|99999|萬中選一頂點象徵巨獸|聲望+600"],
   BUNDLE: [
     "【都市療癒新手包】茶與螢光魚|680|650|梨山茶包＋富貴竹螢光魚瓶|回50體力",
     "【水族爆缸快樂組】孔雀航母艦隊|320|600|航母×2＋純種公魚×3|繁殖翻倍",
@@ -183,7 +183,7 @@ const QUIZZES = [
 ];
 
 let S = { coins:500, rep:10, inv:['T01','P01','F01'], cart:[], vip:false, fry:2, pat:10, zIdx:0 };
-try{ const sv = localStorage.getItem('TF_SAVE_V5'); if(sv) S = {...S, ...JSON.parse(sv)}; }catch(e){}
+try{ const sv = localStorage.getItem('TF_SAVE_V6'); if(sv) S = {...S, ...JSON.parse(sv)}; }catch(e){}
 
 function toast(m){ const t=document.getElementById('toast'); t.innerHTML=m; t.style.display='block'; clearTimeout(window._tt); window._tt=setTimeout(()=>t.style.display='none',3500); }
 function sync(){
@@ -191,10 +191,9 @@ function sync(){
   document.getElementById('hud-rep').innerText = S.rep.toLocaleString();
   document.getElementById('l-fry').innerText = S.fry;
   document.getElementById('l-pat').innerText = S.pat + '%';
-  try{ localStorage.setItem('TF_SAVE_V5', JSON.stringify(S)); }catch(e){}
+  try{ localStorage.setItem('TF_SAVE_V6', JSON.stringify(S)); }catch(e){}
 }
 
-// 商城
 let sMode = 'coin', sCat = 'ALL';
 function openShop(m){ if(m) sMode=m; openModal('m-shop'); renderShop(); }
 function openModal(id){ document.getElementById(id).classList.add('open'); if(id==='m-tarot') renderTarot(); if(id==='m-live') renderQuiz(); }
@@ -207,12 +206,12 @@ function renderShop(){
     <div class="card">
       <div>
         <div style="font-size:.7rem;color:#999">[${p.id}]</div>
-        <div style="font-weight:700;font-size:.86rem;color:#f5ece2;margin:3px 0">${p.name}</div>
-        <div style="font-size:.72rem;color:#bfb0a0;margin-bottom:6px">${p.desc}</div>
+        <div style="font-weight:700;font-size:.86rem;color:#2c221b;margin:3px 0">${p.name}</div>
+        <div style="font-size:.72rem;color:#6b5748;margin-bottom:6px">${p.desc}</div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center">
         <b style="color:var(--gold)">${sMode==='coin'?'🪙 $'+p.coin.toLocaleString():'NT$ '+p.nt.toLocaleString()}</b>
-        <button style="padding:5px 10px;background:var(--grn);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer" onclick="buyItem('${p.id}')">購入</button>
+        <button style="padding:5px 12px;background:var(--grn);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer" onclick="buyItem('${p.id}')">購入</button>
       </div>
     </div>
   `).join('');
@@ -229,9 +228,9 @@ function renderTarot(){
     <div class="card" style="cursor:pointer;text-align:center" onclick="completeQuest(${i})">
       <div style="font-size:2rem">${q[1]}</div>
       <b style="color:var(--gold);margin:4px 0">${q[0]}</b>
-      <div style="font-size:.78rem;color:#e2d1f0;margin-bottom:4px">👤 ${q[2]}</div>
-      <div style="font-size:.72rem;color:#aaa;margin-bottom:8px">${q[3]}</div>
-      <b style="font-size:.74rem;color:#8ce6a5">賞金 +$${q[5].toLocaleString()}</b>
+      <div style="font-size:.78rem;color:#3b2b20;margin-bottom:4px;font-weight:600">👤 ${q[2]}</div>
+      <div style="font-size:.72rem;color:#666;margin-bottom:8px">${q[3]}</div>
+      <b style="font-size:.74rem;color:#137333">賞金 +$${q[5].toLocaleString()}</b>
     </div>
   `).join('');
 }
@@ -245,7 +244,7 @@ function completeQuest(i){
 function renderQuiz(){
   const z = QUIZZES[S.zIdx % QUIZZES.length];
   document.getElementById('lz-q').innerText = z[0];
-  document.getElementById('lz-opts').innerHTML = z[1].map((o,idx)=>`<button style="text-align:left;padding:8px;background:#222;color:#fff;border:1px solid #444;border-radius:6px;cursor:pointer" onclick="ansQuiz(${idx})">${o}</button>`).join('');
+  document.getElementById('lz-opts').innerHTML = z[1].map((o,idx)=>`<button style="text-align:left;padding:10px;background:#f5f0ea;color:#2c221b;border:1px solid #d4c5b9;border-radius:8px;cursor:pointer;font-weight:600" onclick="ansQuiz(${idx})">${o}</button>`).join('');
 }
 function ansQuiz(idx){
   if(idx===0){ S.coins+=350; S.zIdx++; sync(); closeM('m-live'); toast('🎉 答對領紅包 +$350！'); }
@@ -260,72 +259,69 @@ function brewTea(){ S.pat=Math.min(100,S.pat+12); sync(); toast('🍵 泡茶養�
 
 function downloadSelf(){
   const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([html], {type:"text/html;charset=utf-8"}));
+  a.href = URL.createObjectURL(blob);
   a.download = "index.html"; a.click(); toast("💾 已下載 index.html！");
 }
 
 // ============================================================================
-// 次世代 3D 開放世界引擎：綠草地、馬路、路樹、遠山與虛擬搖桿移動
+// 高級 3D 沉浸式引擎：草地、道路、精美建築地標與搖桿移動
 // ============================================================================
-let scene, cam, ren, player, keys={}, touchMove={x:0, y:0}, camAng=0, camDist=18, currentActionTarget = null;
+let scene, cam, ren, player, keys={}, touchMove={x:0, y:0}, camAng=0, camDist=22, currentActionTarget = null;
 let interactiveObjects = [];
 
 function init3D(){
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xb2dfdb); // 天空藍
-  scene.fog = new THREE.FogExp2(0xb2dfdb, 0.012);
+  scene.background = new THREE.Color(0xdce7e8); // 高級淡藍天空
+  scene.fog = new THREE.FogExp2(0xdce7e8, 0.01);
 
-  cam = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 300);
+  cam = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 300);
   ren = new THREE.WebGLRenderer({antialias:true});
   ren.setSize(innerWidth, innerHeight);
   ren.shadowMap.enabled = true;
   document.getElementById('canvas-box').appendChild(ren.domElement);
 
-  scene.add(new THREE.AmbientLight(0xfff8ee, 0.7));
-  const sun = new THREE.DirectionalLight(0xfffaee, 1.0); sun.position.set(20,30,20); sun.castShadow=true; scene.add(sun);
+  scene.add(new THREE.AmbientLight(0xfff8ee, 0.85));
+  const sun = new THREE.DirectionalLight(0xfffaf0, 1.1); sun.position.set(20,35,20); sun.castShadow=true; scene.add(sun);
 
-  // 1. 廣闊綠草地
-  const grass = new THREE.Mesh(new THREE.PlaneGeometry(200,200), new THREE.MeshStandardMaterial({color:0x4caf50, roughness:0.8}));
+  // 1. 廣闊綠意草地
+  const grass = new THREE.Mesh(new THREE.PlaneGeometry(300,300), new THREE.MeshStandardMaterial({color:0x81c784, roughness:0.8}));
   grass.rotation.x = -Math.PI/2; grass.receiveShadow=true; scene.add(grass);
 
-  // 2. 貫穿地圖的馬路
-  const road = new THREE.Mesh(new THREE.PlaneGeometry(12,200), new THREE.MeshStandardMaterial({color:0x37474f}));
-  road.rotation.x = -Math.PI/2; road.position.y = 0.02; scene.add(road);
+  // 2. 質感柏油馬路
+  const road = new THREE.Mesh(new THREE.PlaneGeometry(14,300), new THREE.MeshStandardMaterial({color:0x455a64, roughness:0.5}));
+  road.rotation.x = -Math.PI/2; road.position.y = 0.03; scene.add(road);
 
-  // 3. 兩側路樹群與遠山
-  for(let i=-80; i<=80; i+=12){
-    createTree(-14, i); createTree(14, i);
+  // 3. 兩側精緻路樹群
+  for(let i=-100; i<=100; i+=14){
+    createDetailedTree(-16, i); createDetailedTree(16, i);
   }
 
-  // 4. 主角角色（精美可愛造型）
+  // 4. 精緻主角角色
   player = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.5,1.2,16), new THREE.MeshStandardMaterial({color:0xff7043})); body.position.y=0.6;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.38,16,16), new THREE.MeshStandardMaterial({color:0xffecb3})); head.position.y=1.45;
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.38,0.48,1.3,16), new THREE.MeshStandardMaterial({color:0x2e7d32, roughness:0.3})); body.position.y=0.65;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.35,16,16), new THREE.MeshStandardMaterial({color:0xffe0b2, roughness:0.3})); head.position.y=1.5;
   player.add(body, head); scene.add(player);
 
-  // 5. 散落在地圖各處的探索建築地標
-  createBuilding(-12, -15, 5, 4, 5, 0x7e57c2, "🔮 街角塔羅占卜攤", ()=>openModal('m-tarot'));
-  createBuilding(12, -25, 7, 5, 6, 0xd4af37, "🍵 淺木質生態旗艦店", ()=>openShop('coin'));
-  createBuilding(-12, -45, 6, 4, 6, 0x0288d1, "🐟 後巷養魚倉庫", ()=>openShop('coin'));
-  createBuilding(12, -60, 6, 5, 5, 0x388e3c, "🏡 北歐風木質小窩", ()=>openModal('m-loft'));
-  createBuilding(0, -35, 6, 4, 5, 0xd32f2f, "🔴 官方直播間", ()=>openModal('m-live'));
+  // 5. 散落在地圖各處的 3D 建築地標 (木質店鋪、倉庫、塔羅攤等)
+  createLandmark(-14, -18, 5, 4, 5, 0x8e24aa, "🔮 街角塔羅占卜攤", ()=>openModal('m-tarot'));
+  createLandmark(14, -28, 7, 5, 6, 0xd4af37, "🍵 淺木質生態旗艦店", ()=>openShop('coin'));
+  createLandmark(-14, -50, 6, 4, 6, 0x0288d1, "🐟 後巷養魚倉庫", ()=>openShop('coin'));
+  createLandmark(14, -70, 6, 5, 5, 0x388e3c, "🏡 北歐風木質小窩", ()=>openModal('m-loft'));
+  createLandmark(0, -40, 6, 4, 5, 0xd32f2f, "🔴 官方直播間", ()=>openModal('m-live'));
 
-  // 觸控虛擬搖桿初始化
   initJoystick();
 
   window.onresize = () => { cam.aspect=innerWidth/innerHeight; cam.updateProjectionMatrix(); ren.setSize(innerWidth,innerHeight); };
   window.onkeydown = e => keys[e.key.toLowerCase()] = true;
   window.onkeyup = e => keys[e.key.toLowerCase()] = false;
 
-  // 滑鼠拖曳旋轉視角 (右半邊螢幕)
+  // 滑鼠 / 觸控平滑視角旋轉 (右半邊)
   let isDrag=false, lastX=0;
   ren.domElement.onmousedown = e => { isDrag=true; lastX=e.clientX; };
   window.onmouseup = () => isDrag=false;
-  window.onmousemove = e => {
-    if(isDrag){ camAng -= (e.clientX - lastX) * 0.005; lastX = e.clientX; }
-  };
-  // 觸控滑動視角
+  window.onmousemove = e => { if(isDrag){ camAng -= (e.clientX - lastX) * 0.005; lastX = e.clientX; } };
   window.ontouchstart = e => { if(e.touches[0].clientX > innerWidth/2){ isDrag=true; lastX=e.touches[0].clientX; } };
   window.ontouchend = () => isDrag=false;
   window.ontouchmove = e => {
@@ -334,26 +330,23 @@ function init3D(){
     }
   };
 
-  // 主循環
   let clock = new THREE.Clock();
   (function loop(){
     requestAnimationFrame(loop);
     const dt = clock.getDelta();
 
-    // 移動控制 (鍵盤 + 虛擬搖桿)
     let mx = touchMove.x + (keys.d||keys.arrowright?1:0) - (keys.a||keys.arrowleft?1:0);
     let mz = touchMove.y + (keys.s||keys.arrowdown?1:0) - (keys.w||keys.arrowup?1:0);
     if(mx!==0 || mz!==0){
       const angle = camAng + Math.atan2(mx, mz);
-      player.position.x += Math.sin(angle) * 8 * dt;
-      player.position.z += Math.cos(angle) * 8 * dt;
+      player.position.x += Math.sin(angle) * 7.5 * dt;
+      player.position.z += Math.cos(angle) * 7.5 * dt;
       player.position.x = Math.max(-25, Math.min(25, player.position.x));
-      player.position.z = Math.max(-90, Math.min(10, player.position.z));
+      player.position.z = Math.max(-100, Math.min(10, player.position.z));
       player.rotation.y = angle;
     }
 
-    // 檢查附近可互動建築
-    let nearest = null, minDist = 6;
+    let nearest = null, minDist = 6.5;
     interactiveObjects.forEach(obj => {
       const dist = player.position.distanceTo(obj.mesh.position);
       if(dist < minDist){ minDist = dist; nearest = obj; }
@@ -372,37 +365,39 @@ function init3D(){
       hint.innerText = `🕹️ 使用左下角搖桿在地圖探索建築，走到地標旁即可互動！`;
     }
 
-    // 小地圖紅點連動
     const dot = document.getElementById('mm-dot');
     dot.style.left = `${50 + (player.position.x / 30) * 50}%`;
-    dot.style.top = `${50 + (player.position.z / 100) * 50}%`;
+    dot.style.top = `${50 + (player.position.z / 110) * 50}%`;
 
-    // 攝影機追隨
-    cam.position.lerp(new THREE.Vector3(player.position.x + Math.sin(camAng)*camDist, 10, player.position.z + Math.cos(camAng)*camDist), 0.12);
+    cam.position.lerp(new THREE.Vector3(player.position.x + Math.sin(camAng)*camDist, 12, player.position.z + Math.cos(camAng)*camDist), 0.1);
     cam.lookAt(player.position.x, player.position.y + 1, player.position.z);
 
     ren.render(scene, cam);
   })();
 }
 
-function createTree(x, z){
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.4,2.5,8), new THREE.MeshStandardMaterial({color:0x8d6e63}));
-  trunk.position.set(x, 1.25, z); scene.add(trunk);
-  const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.4,12,12), new THREE.MeshStandardMaterial({color:0x2e7d32}));
-  leaves.position.set(x, 2.8, z); scene.add(leaves);
+function createDetailedTree(x, z){
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.45,3,10), new THREE.MeshStandardMaterial({color:0x795548, roughness:0.8}));
+  trunk.position.set(x, 1.5, z); scene.add(trunk);
+  const leaves = new THREE.Mesh(new THREE.ConeGeometry(1.6,3.5,12), new THREE.MeshStandardMaterial({color:0x1b5e20, roughness:0.6}));
+  leaves.position.set(x, 3.8, z); scene.add(leaves);
 }
 
-function createBuilding(x, z, w, h, d, col, name, actionFn){
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({color:col, roughness:0.25}));
-  mesh.position.set(x, h/2, z); mesh.castShadow=true; scene.add(mesh);
-  interactiveObjects.push({ mesh, name, action: actionFn });
+function createLandmark(x, z, w, h, d, col, name, actionFn){
+  const group = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({color:col, roughness:0.25}));
+  base.position.y = h/2; base.castShadow = true; group.add(base);
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(w*0.7, 2, 4), new THREE.MeshStandardMaterial({color:0xb71c1c, roughness:0.3}));
+  roof.position.y = h + 1; roof.rotation.y = Math.PI/4; group.add(roof);
+  group.position.set(x, 0, z);
+  scene.add(group);
+  interactiveObjects.push({ mesh: base, name, action: actionFn });
 }
 
 function triggerCurrentAction(){
   if(currentActionTarget) currentActionTarget();
 }
 
-// 虛擬搖桿觸控演算法
 function initJoystick(){
   const zone = document.getElementById('joystick-zone');
   const knob = document.getElementById('joystick-knob');
@@ -417,7 +412,7 @@ function initJoystick(){
   zone.onpointermove = e => {
     if(!active) return;
     let dx = e.clientX - center.x, dy = e.clientY - center.y;
-    const dist = Math.hypot(dx, dy), maxR = 35;
+    const dist = Math.hypot(dx, dy), maxR = 38;
     if(dist > maxR){ dx *= maxR/dist; dy *= maxR/dist; }
     knob.style.transform = `translate(${dx}px, ${dy}px)`;
     touchMove.x = dx / maxR; touchMove.y = dy / maxR;
