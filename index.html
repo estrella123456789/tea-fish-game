@@ -7,9 +7,8 @@
     <!-- 引入 Tailwind CSS 與 Google Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- 引入 Three.js 及其控制器與載入器 -->
+    <!-- 引入 Three.js 及其控制器 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; overflow: hidden; background-color: #0b0908; touch-action: none; }
@@ -21,13 +20,6 @@
 
     <!-- 3D 渲染畫布容器 -->
     <div id="webgl-container" class="absolute inset-0 z-0"></div>
-
-    <!-- 載入中動畫畫面 -->
-    <div id="loader-screen" class="absolute inset-0 z-50 bg-[#0b0908] flex flex-col items-center justify-center transition-opacity duration-700">
-        <div class="w-16 h-16 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <h2 class="text-white font-bold text-lg tracking-wider">正在載入 3D 品牌旗艦館與立體模型...</h2>
-        <p class="text-gray-400 text-xs mt-2">建構茶具、水族生態與建築空間中</p>
-    </div>
 
     <!-- 頂部 HUD 狀態列 -->
     <div class="absolute top-4 left-4 right-4 z-10 flex justify-between items-center pointer-events-none">
@@ -146,7 +138,7 @@
         </div>
     </div>
 
-    <!-- 3D 渲染與多重精細模型動態載入邏輯 -->
+    <!-- 3D 渲染與高階光影材質邏輯 -->
     <script>
         let scene, camera, renderer, player, controls;
         let keys = { w: false, a: false, s: false, d: false };
@@ -175,7 +167,7 @@
             controls.dampingFactor = 0.05;
             controls.maxPolarAngle = Math.PI / 2 - 0.02;
 
-            // 燈光系統
+            // 高級燈光與環境光
             const ambientLight = new THREE.AmbientLight(0xffedd5, 1.0);
             scene.add(ambientLight);
 
@@ -194,12 +186,12 @@
             floor.receiveShadow = true;
             scene.add(floor);
 
-            // 主角群組
+            // 建立精緻的主角群組
             player = new THREE.Group();
             scene.add(player);
 
-            // 載入 3D 模型與精細場景建築
-            loadSceneAssets();
+            // 建立高質感旗艦店與展售陳列架構
+            createHighEndShowroom();
 
             // 事件監聽
             window.addEventListener('resize', onWindowResize);
@@ -210,49 +202,43 @@
             animate();
         }
 
-        function loadSceneAssets() {
-            const loader = new THREE.GLTFLoader();
+        function createHighEndShowroom() {
+            // 主角立體造型 (品牌特派員)
+            const body = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.4, 0.6, 1.8, 32),
+                new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.2, metalness: 0.3 })
+            );
+            body.position.y = 0.9;
+            body.castShadow = true;
+            player.add(body);
 
-            // 1. 載入精細的主角模型
-            loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb', (gltf) => {
-                const model = gltf.scene;
-                model.scale.set(0.35, 0.35, 0.35);
-                model.position.set(0, 0, 0);
-                model.traverse(node => { if (node.isMesh) node.castShadow = true; });
-                player.add(model);
-                removeLoader();
-            }, undefined, () => {
-                const fallback = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.8, 1.6, 0.8),
-                    new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.2 })
-                );
-                fallback.position.y = 0.8;
-                player.add(fallback);
-                removeLoader();
-            });
+            const head = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 32, 32),
+                new THREE.MeshStandardMaterial({ color: 0xfde68a, roughness: 0.2 })
+            );
+            head.position.y = 1.95;
+            head.castShadow = true;
+            player.add(head);
 
-            // 2. 建立精細的旗艦店建築結構與大魚缸模型
-            const storeGroup = new THREE.Group();
-
-            // 木質展售主牆
+            // 店鋪木質主牆
             const wall = new THREE.Mesh(
                 new THREE.BoxGeometry(50, 16, 1),
                 new THREE.MeshStandardMaterial({ color: 0x140f0a, roughness: 0.4 })
             );
             wall.position.set(0, 8, -16);
             wall.receiveShadow = true;
-            storeGroup.add(wall);
+            scene.add(wall);
 
-            // 鎮店大型生態大魚缸 (物理玻璃透光折射)
+            // 鎮店大型生態大魚缸 (物理透光折射玻璃)
             const tank = new THREE.Mesh(
                 new THREE.BoxGeometry(8, 4.5, 2.5),
                 new THREE.MeshPhysicalMaterial({ color: 0x047857, transmission: 0.92, opacity: 1, transparent: true, roughness: 0.03, ior: 1.52, thickness: 1.5 })
             );
             tank.position.set(0, 2.2, -10);
             tank.castShadow = true;
-            storeGroup.add(tank);
+            scene.add(tank);
 
-            // 多層次木質陳列櫃與精緻茶具/植物模型擺設
+            // 多層次木質陳列櫃與精緻茶具模型擺設
             [-10, 10].forEach(xPos => {
                 for(let level = 1; level <= 3; level++) {
                     const shelf = new THREE.Mesh(
@@ -261,28 +247,18 @@
                     );
                     shelf.position.set(xPos, level * 1.6, -8);
                     shelf.castShadow = true;
-                    storeGroup.add(shelf);
+                    scene.add(shelf);
 
-                    // 在層板上放置精細茶壺與瓷杯立體物件
+                    // 精緻茶壺與瓷杯造型物件
                     const item = new THREE.Mesh(
                         new THREE.SphereGeometry(0.35, 24, 24),
-                        new THREE.MeshStandardMaterial({ color: level === 1 ? 0x9a3412 : 0x059669, roughness: 0.2, metalness: 0.5 })
+                        new THREE.MeshStandardMaterial({ color: level === 1 ? 0x9a3412 : 0x059669, roughness: 0.15, metalness: 0.6 })
                     );
                     item.position.set(xPos + 1, level * 1.6 + 0.4, -8);
                     item.castShadow = true;
-                    storeGroup.add(item);
+                    scene.add(item);
                 }
             });
-
-            scene.add(storeGroup);
-        }
-
-        function removeLoader() {
-            const loaderScreen = document.getElementById('loader-screen');
-            if (loaderScreen) {
-                loaderScreen.style.opacity = '0';
-                setTimeout(() => loaderScreen.remove(), 700);
-            }
         }
 
         function initJoystick() {
