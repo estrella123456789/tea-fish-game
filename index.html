@@ -3,340 +3,1267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>茶魚植境：我的都市尋寶生活 (Voxel 立體積木風格館)</title>
-    <!-- 引入 Tailwind CSS 與 Google Fonts -->
+    <title>茶魚植境：我的都市尋寶生活 (3D 旗艦旗袍體驗館)</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- 引入 Three.js 及其控制器 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- Three.js + OrbitControls -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
-        body { font-family: 'Noto Sans TC', sans-serif; overflow: hidden; background-color: #0b0908; touch-action: none; }
-        .glass-panel { background: rgba(26, 21, 18, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.12); }
-        .glass-card { background: rgba(38, 32, 28, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+        body { font-family: 'Noto Sans TC', sans-serif; overflow: hidden; background-color: #0d0a08; margin: 0; padding: 0; width: 100vw; height: 100vh; }
+        #canvas3d { width: 100%; height: 100%; display: block; }
+        .glass-panel { background: rgba(28, 22, 18, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12); }
+        .glass-card { background: rgba(38, 30, 24, 0.82); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+        .glass-card:hover { border-color: rgba(217, 119, 6, 0.6); transform: translateY(-3px); box-shadow: 0 12px 30px -8px rgba(217, 119, 6, 0.25); }
+        .active-avatar-card { border-color: #d97706 !important; background: rgba(69, 39, 16, 0.9) !important; box-shadow: 0 0 20px rgba(217, 119, 6, 0.4) !important; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+        ::-webkit-scrollbar-thumb { background: rgba(217, 119, 6, 0.5); border-radius: 4px; }
     </style>
 </head>
-<body class="w-screen h-screen relative select-none">
+<body class="relative">
 
-    <!-- 3D 渲染畫布容器 -->
-    <div id="webgl-container" class="absolute inset-0 z-0"></div>
+    <!-- 3D WebGL Canvas -->
+    <canvas id="canvas3d" class="absolute inset-0 z-0"></canvas>
 
     <!-- 頂部 HUD 狀態列 -->
-    <div class="absolute top-4 left-4 right-4 z-10 flex justify-between items-center pointer-events-none">
-        <div class="glass-panel px-5 py-3 rounded-2xl flex items-center gap-4 pointer-events-auto shadow-2xl">
-            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-600 to-emerald-600 flex items-center justify-center text-white font-bold text-lg shadow-inner">茶</div>
-            <div>
-                <h1 class="text-white font-bold text-sm tracking-wide">茶魚植境：我的都市尋寶生活</h1>
-                <p class="text-amber-400 text-xs flex items-center gap-2"><span>✨ Voxel 積木特派員</span> <span>💰 金幣: <strong id="coin-count">12,500</strong> G</span></p>
+    <header class="absolute top-4 left-4 right-4 z-20 flex flex-wrap justify-between items-center gap-3 pointer-events-none">
+        <div class="glass-panel px-4 py-2.5 rounded-2xl flex items-center gap-3 pointer-events-auto shadow-2xl">
+            <div class="w-11 h-11 rounded-full bg-gradient-to-tr from-amber-700 via-amber-600 to-emerald-600 flex items-center justify-center text-white font-black text-xl shadow-inner border border-amber-400/30">
+                茶
             </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-white font-bold text-sm tracking-wide">茶魚植境：我的都市尋寶生活</h1>
+                    <span id="activeStyleBadge" class="bg-amber-500/20 text-amber-300 text-[10px] px-2.5 py-0.5 rounded-full border border-amber-500/30 font-semibold">仙俠茶靈</span>
+                </div>
+                <div class="flex items-center gap-3 text-xs mt-0.5">
+                    <span class="text-amber-400 font-bold flex items-center gap-1">💰 <span id="coinDisplay">12,500</span> G</span>
+                    <span class="text-emerald-400 font-medium">🍃 梨山新佳陽茶季</span>
+                    <span class="text-cyan-400 font-medium hidden sm:inline">🐟 柔光侘寂展覽館</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 pointer-events-auto">
+            <button onclick="toggleModal('shopModal')" class="glass-panel px-3.5 py-2 rounded-xl text-white text-xs font-bold hover:bg-amber-900/50 hover:text-amber-300 transition flex items-center gap-1.5 shadow-lg active:scale-95">
+                🛒 <span>雙軌商城 (102品項)</span>
+            </button>
+            <button onclick="toggleModal('tarotModal')" class="glass-panel px-3.5 py-2 rounded-xl text-white text-xs font-bold hover:bg-purple-900/50 hover:text-purple-300 transition flex items-center gap-1.5 shadow-lg active:scale-95">
+                🔮 <span>每日塔羅占卜</span>
+            </button>
+            <button onclick="toggleModal('videoModal')" class="glass-panel px-3.5 py-2 rounded-xl text-white text-xs font-bold hover:bg-emerald-900/50 hover:text-emerald-300 transition flex items-center gap-1.5 shadow-lg active:scale-95">
+                🎥 <span>產地影音直擊</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- 底部居中：4大風格吉祥物與模特換裝選擇面板 (Avatar Switcher) -->
+    <div class="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto flex items-center gap-2.5 px-3 py-2 rounded-2xl glass-panel shadow-2xl border border-white/10 max-w-[96vw] overflow-x-auto">
+        <div class="text-[11px] font-bold text-amber-400 px-1 whitespace-nowrap hidden sm:block">🎭 吉祥物形象：</div>
+        
+        <button onclick="switchCharacterStyle('fairy')" id="card-fairy" class="glass-card active-avatar-card px-3 py-2 rounded-xl flex items-center gap-2 text-left shrink-0">
+            <span class="text-2xl">🧚‍♀️</span>
+            <div>
+                <div class="text-white text-xs font-bold">仙俠茶靈仙子</div>
+                <div class="text-[10px] text-amber-300/80">飄逸長袍 × 翡翠髮簪</div>
+            </div>
+        </button>
+
+        <button onclick="switchCharacterStyle('anime')" id="card-anime" class="glass-card px-3 py-2 rounded-xl flex items-center gap-2 text-left shrink-0">
+            <span class="text-2xl">🎧</span>
+            <div>
+                <div class="text-white text-xs font-bold">原宿潮流茶師</div>
+                <div class="text-[10px] text-gray-400">連帽衛衣 × 貓耳耳機</div>
+            </div>
+        </button>
+
+        <button onclick="switchCharacterStyle('master')" id="card-master" class="glass-card px-3 py-2 rounded-xl flex items-center gap-2 text-left shrink-0">
+            <span class="text-2xl">🏮</span>
+            <div>
+                <div class="text-white text-xs font-bold">優雅國潮紳士</div>
+                <div class="text-[10px] text-gray-400">立領唐裝 × 金絲眼鏡</div>
+            </div>
+        </button>
+
+        <button onclick="switchCharacterStyle('beast')" id="card-beast" class="glass-card px-3 py-2 rounded-xl flex items-center gap-2 text-left shrink-0">
+            <span class="text-2xl">🐲</span>
+            <div>
+                <div class="text-white text-xs font-bold">龍鱗水族小螭虎</div>
+                <div class="text-[10px] text-gray-400">琉璃魚鰭 × 萌趣吉祥物</div>
+            </div>
+        </button>
+    </div>
+
+    <!-- 左下角虛擬搖桿 (移動角色) -->
+    <div id="joystickZone" class="absolute bottom-6 left-6 z-30 pointer-events-auto">
+        <div id="joystickBase" class="w-24 h-24 rounded-full glass-panel flex items-center justify-center shadow-2xl border border-white/20 relative touch-none">
+            <div id="joystickKnob" class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-600 to-amber-500 shadow-xl border border-amber-300/40 transform transition-transform duration-75"></div>
+        </div>
+    </div>
+
+    <!-- 右下角視角提示與分區傳送 -->
+    <div class="absolute bottom-6 right-6 z-20 pointer-events-none flex flex-col items-end gap-2">
+        <div class="glass-panel px-3.5 py-2 rounded-xl text-[11px] text-gray-300 pointer-events-auto flex items-center gap-2 shadow-2xl">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span>滑鼠拖曳 <strong>360° 自由環繞轉向</strong> ｜ 滾輪拉近檢視精緻五官</span>
         </div>
         <div class="flex gap-2 pointer-events-auto">
-            <button onclick="openModal('shopModal')" class="glass-panel px-4 py-2.5 rounded-xl text-white text-sm font-medium hover:bg-amber-900/40 transition flex items-center gap-2 shadow-lg">🛒 雙軌商城</button>
-            <button onclick="openModal('taskModal')" class="glass-panel px-4 py-2.5 rounded-xl text-white text-sm font-medium hover:bg-emerald-900/40 transition flex items-center gap-2 shadow-lg">📜 塔羅任務</button>
-            <button onclick="openModal('videoModal')" class="glass-panel px-4 py-2.5 rounded-xl text-white text-sm font-medium hover:bg-purple-900/40 transition flex items-center gap-2 shadow-lg">🎥 短影音</button>
+            <button onclick="teleportTo('teabar')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium glass-card text-gray-300 hover:text-white shadow">🍵 吧台</button>
+            <button onclick="teleportTo('shelves')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium glass-card text-gray-300 hover:text-white shadow">🫖 多寶閣</button>
+            <button onclick="teleportTo('aquarium')" class="px-2.5 py-1.5 rounded-lg text-xs font-medium glass-card text-gray-300 hover:text-white shadow">🐟 水族缸</button>
         </div>
     </div>
 
-    <!-- 左上角分區導覽標籤 -->
-    <div class="absolute top-20 left-4 z-10 flex gap-2 pointer-events-auto">
-        <button onclick="switchZone('store')" id="btn-store" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white shadow-lg">🏮 旗艦木質茶館</button>
-        <button onclick="switchZone('warehouse')" id="btn-warehouse" class="px-3.5 py-1.5 rounded-lg text-xs font-bold glass-card text-gray-300 hover:text-white shadow">🐟 水族養魚倉庫</button>
+    <!-- Toast 浮動通知 -->
+    <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 glass-panel px-6 py-2.5 rounded-2xl text-white text-xs font-bold shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none border border-amber-500/40">
+        提示訊息
     </div>
 
-    <!-- 左下角虛擬搖桿 -->
-    <div id="joystick-base" class="absolute bottom-8 left-8 w-28 h-28 rounded-full glass-panel z-20 flex items-center justify-center pointer-events-auto shadow-2xl border border-white/20">
-        <div id="joystick-stick" class="w-12 h-12 rounded-full bg-amber-600 shadow-inner transition-transform duration-75 cursor-pointer"></div>
-    </div>
-
-    <!-- 底部操作提示 -->
-    <div class="absolute bottom-6 right-6 z-10 pointer-events-none">
-        <div class="glass-panel px-4.5 py-3 rounded-2xl text-gray-300 text-xs pointer-events-auto shadow-2xl flex items-center gap-3">
-            <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>💡 <strong>Voxel 操控說明</strong>：使用左下角<strong>虛擬搖桿</strong>或 <strong>WASD</strong> 移動積木人偶，滑鼠拖曳可<strong>自由 360 度旋轉視角</strong>檢視積木細節。</span>
-        </div>
-    </div>
-
-    <!-- 互動訊息提示 (Toast) -->
-    <div id="toast" class="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-30 glass-panel px-6 py-3 rounded-2xl text-white text-sm shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none">
-        訊息提示...
-    </div>
-
-    <!-- 彈窗：雙軌商城 -->
-    <div id="shopModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-4xl max-h-[85vh] rounded-3xl p-6 flex flex-col shadow-2xl border border-white/10">
+    <!-- 彈窗 1：雙軌商城 (金幣兌換 vs 現金跳轉) -->
+    <div id="shopModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-4xl max-h-[88vh] rounded-3xl p-6 flex flex-col shadow-2xl border border-white/10">
             <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
-                <h3 class="text-white text-lg font-bold flex items-center gap-2">🛒 雙軌商城 (金幣兌換 / 現金直購)</h3>
-                <button onclick="closeModal('shopModal')" class="text-gray-400 hover:text-white text-xl font-bold px-3 py-1 rounded-lg bg-white/5">✕</button>
+                <div>
+                    <h2 class="text-white text-lg font-black flex items-center gap-2">🛒 品牌旗艦雙軌商城 (102品項)</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">啞光天然紫砂、高山初摘鮮葉、微型造景與水族專區</p>
+                </div>
+                <button onclick="toggleModal('shopModal')" class="text-gray-400 hover:text-white text-xl font-bold px-3 py-1 rounded-xl bg-white/5 active:scale-95">✕</button>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-y-auto pr-2">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-y-auto pr-1">
+                <!-- 商品 1 -->
                 <div class="glass-card p-4 rounded-2xl flex flex-col justify-between">
                     <div>
-                        <div class="h-32 bg-gradient-to-br from-amber-800 to-amber-950 rounded-xl mb-3 flex items-center justify-center text-4xl shadow-inner">🍵</div>
-                        <h4 class="text-white font-bold text-sm">梨山新佳陽高山茶 (四兩)</h4>
-                        <p class="text-gray-400 text-xs mt-1">海拔 2000 公尺以上，果香清甜，回甘持久。</p>
+                        <div class="h-32 rounded-xl bg-gradient-to-br from-emerald-950 to-stone-900 flex flex-col items-center justify-center p-3 relative overflow-hidden border border-emerald-500/20 mb-3">
+                            <span class="text-4xl">🍵</span>
+                            <span class="text-[11px] text-emerald-300 font-bold mt-1">台中梨山高冷茶區</span>
+                        </div>
+                        <h3 class="text-white font-bold text-sm">梨山新佳陽手採高冷茶 (四兩/150g)</h3>
+                        <p class="text-gray-400 text-xs mt-1">海拔 2,000 公尺以上純淨雪水灌溉，果香清芬，天然啞光防潮罐包裝。</p>
                     </div>
-                    <div class="mt-4 pt-3 border-t border-white/10 flex justify-between items-center">
-                        <div><p class="text-amber-400 font-bold text-xs">8,750 G</p><p class="text-gray-400 text-[10px]">或現金 NT$875</p></div>
-                        <button onclick="buyItem('梨山新佳陽高山茶')" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow">立即擁有</button>
+                    <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+                        <div>
+                            <div class="text-amber-400 font-bold text-xs">8,750 G</div>
+                            <div class="text-gray-400 text-[10px]">現金價 NT$875</div>
+                        </div>
+                        <button onclick="purchaseGoods('梨山新佳陽手採茶', 8750)" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-md active:scale-95">
+                            金幣兌換
+                        </button>
                     </div>
                 </div>
+
+                <!-- 商品 2 -->
                 <div class="glass-card p-4 rounded-2xl flex flex-col justify-between">
                     <div>
-                        <div class="h-32 bg-gradient-to-br from-purple-900 to-indigo-950 rounded-xl mb-3 flex items-center justify-center text-4xl shadow-inner">🫖</div>
-                        <h4 class="text-white font-bold text-sm">宜興原礦紫砂西施壺</h4>
-                        <p class="text-gray-400 text-xs mt-1">透氣性佳，泡茶首選，大師手作工藝。</p>
+                        <div class="h-32 rounded-xl bg-gradient-to-br from-amber-950 to-stone-950 flex flex-col items-center justify-center p-3 relative overflow-hidden border border-amber-600/20 mb-3">
+                            <span class="text-4xl">🫖</span>
+                            <span class="text-[11px] text-amber-300 font-bold mt-1">中國宜興原礦未上釉啞光紫砂</span>
+                        </div>
+                        <h3 class="text-white font-bold text-sm">名家天鵝頸西施壺 (240ml)</h3>
+                        <p class="text-gray-400 text-xs mt-1">天然礦物雙重透氣微孔，柔和溫潤未拋光磨砂陶土，不奪茶真香。</p>
                     </div>
-                    <div class="mt-4 pt-3 border-t border-white/10 flex justify-between items-center">
-                        <div><p class="text-amber-400 font-bold text-xs">28,000 G</p><p class="text-gray-400 text-[10px]">或現金 NT$3,200</p></div>
-                        <button onclick="buyItem('宜興原礦紫砂西施壺')" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow">立即擁有</button>
+                    <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+                        <div>
+                            <div class="text-amber-400 font-bold text-xs">28,000 G</div>
+                            <div class="text-gray-400 text-[10px]">現金價 NT$3,200</div>
+                        </div>
+                        <button onclick="purchaseGoods('宜興西施紫砂壺', 28000)" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-md active:scale-95">
+                            金幣兌換
+                        </button>
                     </div>
                 </div>
+
+                <!-- 商品 3 -->
                 <div class="glass-card p-4 rounded-2xl flex flex-col justify-between">
                     <div>
-                        <div class="h-32 bg-gradient-to-br from-emerald-900 to-teal-950 rounded-xl mb-3 flex items-center justify-center text-4xl shadow-inner">🌿</div>
-                        <h4 class="text-white font-bold text-sm">微型苔蘚生態透明罩造景缸</h4>
-                        <p class="text-gray-400 text-xs mt-1">辦公室療癒小物，免頻繁澆水微景觀。</p>
+                        <div class="h-32 rounded-xl bg-gradient-to-br from-teal-950 to-emerald-950 flex flex-col items-center justify-center p-3 relative overflow-hidden border border-teal-500/20 mb-3">
+                            <span class="text-4xl">🌿</span>
+                            <span class="text-[11px] text-teal-300 font-bold mt-1">微型生態造景師手作</span>
+                        </div>
+                        <h3 class="text-white font-bold text-sm">微型苔蘚透明球罩觀景缸</h3>
+                        <p class="text-gray-400 text-xs mt-1">天然啞光黑火山岩、鮮活白髮蘚微景觀，辦公桌免繁瑣照顧的綠意窗口。</p>
                     </div>
-                    <div class="mt-4 pt-3 border-t border-white/10 flex justify-between items-center">
-                        <div><p class="text-amber-400 font-bold text-xs">6,800 G</p><p class="text-gray-400 text-[10px]">或現金 NT$980</p></div>
-                        <button onclick="buyItem('微型苔蘚生態透明罩造景缸')" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow">立即擁有</button>
+                    <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+                        <div>
+                            <div class="text-amber-400 font-bold text-xs">6,800 G</div>
+                            <div class="text-gray-400 text-[10px]">現金價 NT$980</div>
+                        </div>
+                        <button onclick="purchaseGoods('微型苔蘚造景缸', 6800)" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-md active:scale-95">
+                            金幣兌換
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 商品 4 -->
+                <div class="glass-card p-4 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <div class="h-32 rounded-xl bg-gradient-to-br from-rose-950 to-stone-900 flex flex-col items-center justify-center p-3 relative overflow-hidden border border-rose-500/20 mb-3">
+                            <span class="text-4xl">🐉</span>
+                            <span class="text-[11px] text-rose-300 font-bold mt-1">鎮店聚財銘木神魚</span>
+                        </div>
+                        <h3 class="text-white font-bold text-sm">霸氣特選血玉紅龍魚</h3>
+                        <p class="text-gray-400 text-xs mt-1">濃艷鱗框發色，體態霸氣雍容，水族愛好者鎮宅納福極品。</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+                        <div>
+                            <div class="text-amber-400 font-bold text-xs">150,000 G</div>
+                            <div class="text-gray-400 text-[10px]">現金價 NT$18,800</div>
+                        </div>
+                        <button onclick="purchaseGoods('霸氣血玉紅龍魚', 150000)" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-md active:scale-95">
+                            金幣兌換
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 商品 5 -->
+                <div class="glass-card p-4 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <div class="h-32 rounded-xl bg-gradient-to-br from-indigo-950 to-fuchsia-950 flex flex-col items-center justify-center p-3 relative overflow-hidden border border-fuchsia-500/20 mb-3">
+                            <span class="text-4xl">🐟</span>
+                            <span class="text-[11px] text-fuchsia-300 font-bold mt-1">夜光水族活體</span>
+                        </div>
+                        <h3 class="text-white font-bold text-sm">夜光螢光斑馬魚 (一對)</h3>
+                        <p class="text-gray-400 text-xs mt-1">水中閃耀夢幻螢光色彩，體質強健活潑，適合新手入坑。</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+                        <div>
+                            <div class="text-amber-400 font-bold text-xs">1,500 G</div>
+                            <div class="text-gray-400 text-[10px]">現金價 NT$180</div>
+                        </div>
+                        <button onclick="purchaseGoods('夜光螢光魚一對', 1500)" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-md active:scale-95">
+                            金幣兌換
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 商品 6 -->
+                <div class="glass-card p-4 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <div class="h-32 rounded-xl bg-gradient-to-br from-yellow-950 to-amber-950 flex flex-col items-center justify-center p-3 relative overflow-hidden border border-yellow-500/20 mb-3">
+                            <span class="text-4xl">🍂</span>
+                            <span class="text-[11px] text-yellow-300 font-bold mt-1">福壽山珍稀極品</span>
+                        </div>
+                        <h3 class="text-white font-bold text-sm">福壽山天池手採烏龍 (一斤/600g)</h3>
+                        <p class="text-gray-400 text-xs mt-1">海拔 2,600 公尺天池寒氣淬鍊，甘甜如泉，限量原木茶倉封裝。</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between">
+                        <div>
+                            <div class="text-amber-400 font-bold text-xs">78,000 G</div>
+                            <div class="text-gray-400 text-[10px]">現金價 NT$8,800</div>
+                        </div>
+                        <button onclick="purchaseGoods('福壽山頂級茶一斤', 78000)" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-md active:scale-95">
+                            金幣兌換
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 彈窗：塔羅任務 -->
-    <div id="taskModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <!-- 彈窗 2：街角塔羅占卜每日任務 -->
+    <div id="tarotModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
         <div class="glass-panel w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-white/10 text-center">
-            <h3 class="text-white text-lg font-bold mb-2">🔮 街角塔羅占卜與每日任務</h3>
-            <p class="text-gray-300 text-xs mb-6">抽取今日運勢卡，完成任務即可賺取金幣！</p>
-            <div class="glass-card p-6 rounded-2xl mb-6">
-                <div id="tarotResult" class="text-amber-400 font-bold text-base mb-2">點擊下方按鈕抽取今日品牌指引</div>
-                <p class="text-gray-400 text-xs">了解梨山茶區風土與生態水族保養秘訣。</p>
+            <h3 class="text-white text-lg font-bold mb-2">🔮 街角塔羅占卜與每日尋寶任務</h3>
+            <p class="text-gray-300 text-xs mb-6 leading-relaxed">抽取今日品牌運勢指引卡，沉澱心靈，完成任務即刻領取獎勵金幣！</p>
+            
+            <div class="glass-card p-6 rounded-2xl mb-6 relative overflow-hidden border border-amber-500/30">
+                <div id="tarotCardTitle" class="text-amber-400 font-bold text-base mb-2">🌟 尚未抽牌</div>
+                <p id="tarotCardContent" class="text-gray-300 text-xs leading-relaxed">點選下方按鈕抽一張牌，為今日的都市尋寶生活帶來指引。</p>
             </div>
+
             <div class="flex gap-3 justify-center">
-                <button onclick="drawTarot()" class="bg-gradient-to-r from-amber-600 to-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg">抽塔羅領 1,000 G</button>
-                <button onclick="closeModal('taskModal')" class="glass-card text-white px-5 py-2.5 rounded-xl text-xs font-bold">關閉視窗</button>
+                <button onclick="drawTarotCard()" class="bg-gradient-to-r from-amber-600 to-emerald-600 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg hover:brightness-110 active:scale-95 transition">
+                    抽取今日塔羅 (+1,000 G)
+                </button>
+                <button onclick="toggleModal('tarotModal')" class="glass-card text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-white/10 transition">
+                    關閉視窗
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- 彈窗：短影音 -->
-    <div id="videoModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <!-- 彈窗 3：產地影音直播 -->
+    <div id="videoModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4">
         <div class="glass-panel w-full max-w-xl rounded-3xl p-6 shadow-2xl border border-white/10 text-center">
-            <h3 class="text-white text-lg font-bold mb-2">🎥 品牌直擊與短影音牆</h3>
-            <p class="text-gray-300 text-xs mb-4">探索梨山茶園採茶實況與水族倉庫生態造景短片</p>
+            <h3 class="text-white text-lg font-bold mb-2">🎥 品牌直擊：梨山高山茶園採茶日常與水族生態</h3>
+            <p class="text-gray-300 text-xs mb-4">深入海拔 2200 公尺茶園現場，看老師傅如何手工揉捻茶葉與維護苔蘚微景觀。</p>
+            
             <div class="glass-card h-64 rounded-2xl mb-4 flex items-center justify-center relative overflow-hidden group">
-                <div class="absolute inset-0 bg-gradient-to-tr from-amber-900/60 to-emerald-900/60 flex items-center justify-center">
-                    <div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white text-2xl shadow-xl cursor-pointer">▶</div>
+                <div class="absolute inset-0 bg-gradient-to-tr from-amber-950/80 via-black/60 to-emerald-950/80 flex flex-col items-center justify-center p-6 text-center">
+                    <div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white text-2xl shadow-xl group-hover:scale-110 transition cursor-pointer mb-3">
+                        ▶
+                    </div>
+                    <span class="text-white font-bold text-sm">【短影音精華】宜興名家西施壺開壺養壺全過程</span>
+                    <span class="text-amber-400 text-xs mt-1">觀看短片解鎖限定優惠碼：<strong class="underline">LISHAN90</strong> (全館9折)</span>
                 </div>
-                <span class="absolute bottom-3 left-4 text-white text-xs font-bold">🎬 梨山高山茶 20年陳年老茶開箱特輯</span>
             </div>
-            <button onclick="closeModal('videoModal')" class="glass-card text-white px-6 py-2 rounded-xl text-xs font-bold">返回 3D 空間</button>
+
+            <button onclick="toggleModal('videoModal')" class="glass-card text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-white/10 transition">
+                返回 3D 體驗空間
+            </button>
         </div>
     </div>
 
-    <!-- Voxel 體素立體積木與互動核心邏輯 -->
+    <!-- 3D 核心：柔和啞光材質 + 4大高精細模特角色風格系統 -->
     <script>
-        let scene, camera, renderer, player, controls;
-        let keys = { w: false, a: false, s: false, d: false };
-        let joystickMove = { x: 0, y: 0 };
-        let currentCoins = 12500;
+        let scene, camera, renderer, controls;
+        let playerGroup;
+        let currentStyle = 'fairy';
+        let animatedFishes = [];
+        let coins = 12500;
+        let walkCycle = 0;
+        const keys = { w: false, a: false, s: false, d: false };
+        let joystickVector = { x: 0, y: 0 };
+
+        // 角色骨架關節參考（供步態與飄逸動畫更新）
+        let activeLimbs = {
+            leftLeg: null, rightLeg: null,
+            leftArm: null, rightArm: null,
+            hairOrRibbon: null,
+            tail: null
+        };
+
+        window.addEventListener('DOMContentLoaded', init3D);
 
         function init3D() {
-            const container = document.getElementById('webgl-container');
+            const canvas = document.getElementById('canvas3d');
 
-            // 1. 3D 場景與相機
+            // 1. 場景與溫暖柔光和風霧氣 (解決黑沉死板問題)
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0b0908);
-            scene.fog = new THREE.FogExp2(0x0b0908, 0.01);
+            scene.background = new THREE.Color(0x130e0b);
+            scene.fog = new THREE.FogExp2(0x130e0b, 0.015);
 
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 8, 14);
+            // 2. 相機
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 4.5, 9.5);
 
-            // 2. 渲染器
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            // 3. 渲染器 (柔和陰影，禁用生硬高反光)
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.shadowMap.enabled = true;
-            container.appendChild(renderer.domElement);
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
 
-            // 3. 視角控制器 (解鎖 360 度旋轉)
+            // 4. OrbitControls 解鎖自由旋轉與聚焦縮放
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.maxPolarAngle = Math.PI / 2 - 0.03;
+            controls.maxPolarAngle = Math.PI / 2 - 0.02;
+            controls.minDistance = 2.0;
+            controls.maxDistance = 22;
             controls.enableRotate = true;
+            controls.target.set(0, 1.35, 0);
 
-            // 4. 燈光系統
-            const ambientLight = new THREE.AmbientLight(0xffedd5, 0.9);
-            scene.add(ambientLight);
+            // 5. 專業攝影棚柔光照明系統 (去除油光核心：高半球散射 + 柔和聚光)
+            const hemiLight = new THREE.HemisphereLight(0xffedd5, 0x291d15, 1.1); // 天空暖杏、地面木褐散射
+            scene.add(hemiLight);
 
-            const dirLight = new THREE.DirectionalLight(0xfffbeb, 1.6);
-            dirLight.position.set(15, 25, 15);
-            dirLight.castShadow = true;
-            scene.add(dirLight);
+            // 柔光漫射主光 (模擬日式紙窗進光)
+            const softKeyLight = new THREE.DirectionalLight(0xfff7ed, 1.4);
+            softKeyLight.position.set(12, 20, 14);
+            softKeyLight.castShadow = true;
+            softKeyLight.shadow.mapSize.width = 2048;
+            softKeyLight.shadow.mapSize.height = 2048;
+            softKeyLight.shadow.radius = 4; // 柔化陰影邊緣
+            scene.add(softKeyLight);
 
-            // 5. 木質地板
-            const floorGeo = new THREE.PlaneGeometry(100, 100);
-            const floorMat = new THREE.MeshStandardMaterial({ color: 0x1f140e, roughness: 0.4 });
+            // 暖和側邊補光 (消解陰暗面)
+            const softFillLight = new THREE.DirectionalLight(0xfde68a, 0.6);
+            softFillLight.position.set(-10, 12, -8);
+            scene.add(softFillLight);
+
+            // 吧台微暖聚光
+            const lanternGlow = new THREE.PointLight(0xf59e0b, 1.6, 16);
+            lanternGlow.position.set(0, 4.5, -0.5);
+            scene.add(lanternGlow);
+
+            // 水族箱柔和深海藍調擴散光
+            const aquaGlow = new THREE.PointLight(0x38bdf8, 2.2, 14);
+            aquaGlow.position.set(0, 3.8, -9.5);
+            scene.add(aquaGlow);
+
+            // 6. 啞光天然木質地板與侘寂建築
+            buildMatteWabiSabiShowroom();
+
+            // 7. 建立角色根節點並生成預設風格 (仙俠茶靈仙子)
+            playerGroup = new THREE.Group();
+            scene.add(playerGroup);
+            buildCharacterStyle('fairy');
+
+            // 8. 綁定控制器與循環
+            setupControls();
+            setupJoystick();
+            requestAnimationFrame(animateLoop);
+        }
+
+        // ==========================================================
+        // 核心革新：4大風格洋娃娃/高精細模特角色生成系統
+        // ==========================================================
+        function clearCurrentCharacter() {
+            while (playerGroup.children.length > 0) {
+                const obj = playerGroup.children[0];
+                playerGroup.remove(obj);
+            }
+            activeLimbs = { leftLeg: null, rightLeg: null, leftArm: null, rightArm: null, hairOrRibbon: null, tail: null };
+        }
+
+        function switchCharacterStyle(styleKey) {
+            currentStyle = styleKey;
+            clearCurrentCharacter();
+            buildCharacterStyle(styleKey);
+
+            // 更新 UI 狀態
+            ['fairy', 'anime', 'master', 'beast'].forEach(k => {
+                const btn = document.getElementById(`card-${k}`);
+                if (k === styleKey) {
+                    btn.classList.add('active-avatar-card');
+                } else {
+                    btn.classList.remove('active-avatar-card');
+                }
+            });
+
+            const badges = {
+                fairy: '仙俠茶靈仙子',
+                anime: '原宿潮流茶師',
+                master: '優雅國潮紳士',
+                beast: '龍鱗水族小螭虎'
+            };
+            document.getElementById('activeStyleBadge').innerText = badges[styleKey];
+            showToast(`✨ 已切換至「${badges[styleKey]}」品牌形象！`);
+        }
+
+        function buildCharacterStyle(style) {
+            // 通用高精度霧面膚質 (高Roughness，溫潤微紅，絕無反光塑膠感)
+            const dollSkinMat = new THREE.MeshStandardMaterial({
+                color: 0xffe4d6,
+                roughness: 0.82,
+                metalness: 0.02
+            });
+            const eyeColor = 0x1e1b4b;
+            const eyeGlossMat = new THREE.MeshStandardMaterial({ color: eyeColor, roughness: 0.2 });
+
+            if (style === 'fairy') {
+                // =====================================================
+                // Style A:【仙俠茶靈仙子】飄逸羽衣、飛仙髻、玉簪、懸浮青葉光環
+                // =====================================================
+                const silkRobesMat = new THREE.MeshStandardMaterial({ color: 0xecfdf5, roughness: 0.75 }); // 霧面絲綢白
+                const mintTrimMat = new THREE.MeshStandardMaterial({ color: 0x34d399, roughness: 0.65 });  // 薄荷茶綠飾邊
+                const hairMat = new THREE.MeshStandardMaterial({ color: 0x261e1b, roughness: 0.85 });      // 霧面墨黑長髮
+                const jadeMat = new THREE.MeshStandardMaterial({ color: 0x6ee7b7, roughness: 0.35, metalness: 0.2 });
+
+                // 飄逸長袍裙身 (微展開圓錐)
+                const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.58, 1.1, 24, 1, true), silkRobesMat);
+                skirt.position.y = 0.85;
+                skirt.castShadow = true;
+                playerGroup.add(skirt);
+
+                // 纖細上身腰封與碧玉胸墜
+                const bodice = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.55, 20), silkRobesMat);
+                bodice.position.y = 1.35;
+                playerGroup.add(bodice);
+
+                const sash = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.12, 20), mintTrimMat);
+                sash.position.y = 1.18;
+                playerGroup.add(sash);
+
+                // 娃娃般精緻臉龐與微尖下巴
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 24), dollSkinMat);
+                head.scale.set(1.0, 1.15, 1.0);
+                head.position.y = 1.82;
+                head.castShadow = true;
+                playerGroup.add(head);
+
+                // 仙氣動漫大眼與櫻桃小口
+                [-0.075, 0.075].forEach(x => {
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.038, 14, 14), eyeGlossMat);
+                    eye.position.set(x, 1.84, 0.21);
+                    playerGroup.add(eye);
+                    const highlight = new THREE.Mesh(new THREE.SphereGeometry(0.012, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                    highlight.position.set(x + 0.012, 1.85, 0.24);
+                    playerGroup.add(highlight);
+                });
+
+                // 飛仙立體高髻與翡翠發簪
+                const bun = new THREE.Mesh(new THREE.SphereGeometry(0.18, 20, 20), hairMat);
+                bun.scale.set(0.9, 1.4, 0.9);
+                bun.position.set(0, 2.12, -0.06);
+                playerGroup.add(bun);
+
+                const hairpin = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.58), jadeMat);
+                hairpin.rotation.z = Math.PI / 3;
+                hairpin.position.set(0, 2.12, -0.04);
+                playerGroup.add(hairpin);
+
+                // 飄逸後披長髮
+                const longHair = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.28, 0.9, 16), hairMat);
+                longHair.position.set(0, 1.5, -0.16);
+                longHair.rotation.x = -0.1;
+                playerGroup.add(longHair);
+
+                // 仙靈懸浮光環 (環繞茶葉法印)
+                const halo = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.02, 12, 36), new THREE.MeshBasicMaterial({ color: 0x6ee7b7 }));
+                halo.position.set(0, 1.82, -0.22);
+                playerGroup.add(halo);
+
+                // 寬袖水袖雙臂
+                activeLimbs.leftArm = new THREE.Group();
+                activeLimbs.leftArm.position.set(-0.32, 1.52, 0);
+                const lSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.22, 0.65, 16), silkRobesMat);
+                lSleeve.position.y = -0.3;
+                activeLimbs.leftArm.add(lSleeve);
+                playerGroup.add(activeLimbs.leftArm);
+
+                activeLimbs.rightArm = new THREE.Group();
+                activeLimbs.rightArm.position.set(0.32, 1.52, 0);
+                const rSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.22, 0.65, 16), silkRobesMat);
+                rSleeve.position.y = -0.3;
+                activeLimbs.rightArm.add(rSleeve);
+                playerGroup.add(activeLimbs.rightArm);
+
+                // 雙腿
+                activeLimbs.leftLeg = new THREE.Group();
+                activeLimbs.leftLeg.position.set(-0.12, 0.6, 0);
+                const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.65, 12), dollSkinMat);
+                lLeg.position.y = -0.32;
+                activeLimbs.leftLeg.add(lLeg);
+                playerGroup.add(activeLimbs.leftLeg);
+
+                activeLimbs.rightLeg = new THREE.Group();
+                activeLimbs.rightLeg.position.set(0.12, 0.6, 0);
+                const rLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.65, 12), dollSkinMat);
+                rLeg.position.y = -0.32;
+                activeLimbs.rightLeg.add(rLeg);
+                playerGroup.add(activeLimbs.rightLeg);
+
+            } else if (style === 'anime') {
+                // =====================================================
+                // Style B:【原宿潮流茶師精靈】Oversized 潮服、立體短髮、貓耳耳機、厚底球鞋
+                // =====================================================
+                const hoodieMat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.85 }); // 霧面珊瑚粉衛衣
+                const shortsMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.8 });  // 深灰工裝短褲
+                const hairPinkMat = new THREE.MeshStandardMaterial({ color: 0xfbcfe8, roughness: 0.7 }); // 柔粉色二次元立體短髮
+                const strapMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.5 });
+                const sneakerWhite = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 });
+
+                // Oversized 寬鬆連帽衛衣
+                const hoodie = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.44, 0.85, 20), hoodieMat);
+                hoodie.position.y = 1.15;
+                hoodie.castShadow = true;
+                playerGroup.add(hoodie);
+
+                // 潮服立體抽繩
+                [-0.08, 0.08].forEach(x => {
+                    const string = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.35), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                    string.position.set(x, 1.25, 0.38);
+                    playerGroup.add(string);
+                });
+
+                // 萌系大眼娃娃臉
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 24, 24), dollSkinMat);
+                head.position.y = 1.82;
+                head.castShadow = true;
+                playerGroup.add(head);
+
+                [-0.08, 0.08].forEach(x => {
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.042, 14, 14), new THREE.MeshBasicMaterial({ color: 0x0284c7 }));
+                    eye.position.set(x, 1.83, 0.23);
+                    playerGroup.add(eye);
+                    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                    pupil.position.set(x + 0.01, 1.85, 0.26);
+                    playerGroup.add(pupil);
+                });
+
+                // 立體蓬鬆層次短髮
+                const hairBase = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 20), hairPinkMat);
+                hairBase.scale.set(1.05, 1.05, 1.1);
+                hairBase.position.set(0, 1.88, -0.02);
+                playerGroup.add(hairBase);
+
+                // 原宿貓耳潮牌耳機
+                const band = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.035, 12, 24, Math.PI), strapMat);
+                band.rotation.x = Math.PI / 2;
+                band.position.set(0, 1.95, 0);
+                playerGroup.add(band);
+
+                [-0.28, 0.28].forEach(x => {
+                    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.07, 16), hoodieMat);
+                    cup.rotation.z = Math.PI / 2;
+                    cup.position.set(x, 1.85, 0);
+                    playerGroup.add(cup);
+                });
+
+                // 貓耳揚聲器錐角
+                [-0.15, 0.15].forEach(x => {
+                    const catEar = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.16, 4), hoodieMat);
+                    catEar.rotation.z = x > 0 ? -0.3 : 0.3;
+                    catEar.position.set(x, 2.18, 0);
+                    playerGroup.add(catEar);
+                });
+
+                // 四肢：寬鬆落肩長袖
+                activeLimbs.leftArm = new THREE.Group();
+                activeLimbs.leftArm.position.set(-0.44, 1.45, 0);
+                const lArm = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.65, 16), hoodieMat);
+                lArm.position.y = -0.28;
+                activeLimbs.leftArm.add(lArm);
+                playerGroup.add(activeLimbs.leftArm);
+
+                activeLimbs.rightArm = new THREE.Group();
+                activeLimbs.rightArm.position.set(0.44, 1.45, 0);
+                const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.65, 16), hoodieMat);
+                rArm.position.y = -0.28;
+                activeLimbs.rightArm.add(rArm);
+                playerGroup.add(activeLimbs.rightArm);
+
+                // 雙腿配白色堆堆襪與厚底潮鞋
+                activeLimbs.leftLeg = new THREE.Group();
+                activeLimbs.leftLeg.position.set(-0.16, 0.75, 0);
+                const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 14), dollSkinMat);
+                lLeg.position.y = -0.35;
+                activeLimbs.leftLeg.add(lLeg);
+                const lShoe = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.36), sneakerWhite);
+                lShoe.position.set(0, -0.72, 0.06);
+                activeLimbs.leftLeg.add(lShoe);
+                playerGroup.add(activeLimbs.leftLeg);
+
+                activeLimbs.rightLeg = new THREE.Group();
+                activeLimbs.rightLeg.position.set(0.16, 0.75, 0);
+                const rLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 14), dollSkinMat);
+                rLeg.position.y = -0.35;
+                activeLimbs.rightLeg.add(rLeg);
+                const rShoe = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.36), sneakerWhite);
+                rShoe.position.set(0, -0.72, 0.06);
+                activeLimbs.rightLeg.add(rShoe);
+                playerGroup.add(activeLimbs.rightLeg);
+
+            } else if (style === 'master') {
+                // =====================================================
+                // Style C:【優雅國潮茶藝師】立體中式唐裝馬甲、挺拔立領、金絲眼鏡、深藍西褲
+                // =====================================================
+                const silkIndigoMat = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.65 }); // 霧面黛藍
+                const blackPantsMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.85 }); // 啞光純黑西褲
+                const goldWireMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3, metalness: 0.8 }); // 金絲
+
+                // 挺拔新中式立領馬甲
+                const vest = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.34, 0.95, 20), silkIndigoMat);
+                vest.position.y = 1.25;
+                vest.castShadow = true;
+                playerGroup.add(vest);
+
+                // 中式立領
+                const standCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.16, 20), silkIndigoMat);
+                standCollar.position.y = 1.76;
+                playerGroup.add(standCollar);
+
+                // 盤扣金鈕裝飾
+                for (let b = 0; b < 3; b++) {
+                    const button = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), goldWireMat);
+                    button.position.set(0, 1.1 + b * 0.22, 0.34);
+                    playerGroup.add(button);
+                }
+
+                // 儒雅俊秀模特頭雕
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 24, 24), dollSkinMat);
+                head.scale.set(0.96, 1.12, 1.0);
+                head.position.y = 1.95;
+                head.castShadow = true;
+                playerGroup.add(head);
+
+                // 精緻金絲圓框眼鏡
+                [-0.075, 0.075].forEach(x => {
+                    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 10, 20), goldWireMat);
+                    rim.position.set(x, 1.97, 0.23);
+                    playerGroup.add(rim);
+                });
+                const bridge = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.07), goldWireMat);
+                bridge.rotation.z = Math.PI / 2;
+                bridge.position.set(0, 1.97, 0.23);
+                playerGroup.add(bridge);
+
+                // 俐落深色分層油頭
+                const hair = new THREE.Mesh(new THREE.SphereGeometry(0.26, 20, 20), new THREE.MeshStandardMaterial({ color: 0x1c1917, roughness: 0.8 }));
+                hair.scale.set(1.0, 1.05, 1.1);
+                hair.position.set(0, 2.05, -0.04);
+                playerGroup.add(hair);
+
+                // 沉穩挺拔四肢
+                activeLimbs.leftArm = new THREE.Group();
+                activeLimbs.leftArm.position.set(-0.38, 1.6, 0);
+                const lArm = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 16), silkIndigoMat);
+                lArm.position.y = -0.32;
+                activeLimbs.leftArm.add(lArm);
+                playerGroup.add(activeLimbs.leftArm);
+
+                activeLimbs.rightArm = new THREE.Group();
+                activeLimbs.rightArm.position.set(0.38, 1.6, 0);
+                const rArm = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.7, 16), silkIndigoMat);
+                rArm.position.y = -0.32;
+                activeLimbs.rightArm.add(rArm);
+                playerGroup.add(activeLimbs.rightArm);
+
+                activeLimbs.leftLeg = new THREE.Group();
+                activeLimbs.leftLeg.position.set(-0.15, 0.75, 0);
+                const lLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.8, 16), blackPantsMat);
+                lLeg.position.y = -0.4;
+                activeLimbs.leftLeg.add(lLeg);
+                playerGroup.add(activeLimbs.leftLeg);
+
+                activeLimbs.rightLeg = new THREE.Group();
+                activeLimbs.rightLeg.position.set(0.15, 0.75, 0);
+                const rLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.8, 16), blackPantsMat);
+                rLeg.position.y = -0.4;
+                activeLimbs.rightLeg.add(rLeg);
+                playerGroup.add(activeLimbs.rightLeg);
+
+            } else if (style === 'beast') {
+                // =====================================================
+                // Style D:【水族造景神獸：龍鱗小螭虎】超萌麟紋、水波魚鰭耳、珍珠瓔珞、靈動龍尾
+                // =====================================================
+                const scalesMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.65, metalness: 0.1 }); // 碧海藍龍鱗
+                const bellyMat = new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.8 });  // 鵝黃嫩肚
+                const translucentFin = new THREE.MeshPhysicalMaterial({
+                    color: 0x38bdf8,
+                    transmission: 0.85,
+                    roughness: 0.2,
+                    ior: 1.45,
+                    transparent: true
+                });
+
+                // 圓滾滾憨萌神獸身軀
+                const body = new THREE.Mesh(new THREE.SphereGeometry(0.48, 24, 24), scalesMat);
+                body.scale.set(1.0, 1.15, 0.95);
+                body.position.y = 0.95;
+                body.castShadow = true;
+                playerGroup.add(body);
+
+                // 軟萌鵝黃腹斑
+                const belly = new THREE.Mesh(new THREE.SphereGeometry(0.36, 20, 20), bellyMat);
+                belly.scale.set(0.85, 1.0, 0.4);
+                belly.position.set(0, 0.95, 0.36);
+                playerGroup.add(belly);
+
+                // 呆萌大頭部與可愛大眼睛
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 24), scalesMat);
+                head.position.y = 1.72;
+                head.castShadow = true;
+                playerGroup.add(head);
+
+                [-0.14, 0.14].forEach(x => {
+                    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 16), new THREE.MeshBasicMaterial({ color: 0x0f172a }));
+                    eye.position.set(x, 1.76, 0.36);
+                    playerGroup.add(eye);
+                    const spark = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+                    spark.position.set(x + 0.025, 1.8, 0.42);
+                    playerGroup.add(spark);
+                });
+
+                // 頭頂迷你白玉龍角
+                [-0.12, 0.12].forEach(x => {
+                    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.24, 8), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4 }));
+                    horn.rotation.z = x > 0 ? -0.25 : 0.25;
+                    horn.position.set(x, 2.18, 0.05);
+                    playerGroup.add(horn);
+                });
+
+                // 兩側半透明水波魚鰭耳
+                [-0.42, 0.42].forEach(x => {
+                    const fin = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.45, 6), translucentFin);
+                    fin.rotation.z = x > 0 ? -Math.PI / 2.5 : Math.PI / 2.5;
+                    fin.position.set(x, 1.72, 0);
+                    playerGroup.add(fin);
+                });
+
+                // 頸間辟邪珍珠瓔珞金鈴
+                const bell = new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.6, roughness: 0.3 }));
+                bell.position.set(0, 1.35, 0.42);
+                playerGroup.add(bell);
+
+                // 粗短可愛四肢
+                activeLimbs.leftLeg = new THREE.Group();
+                activeLimbs.leftLeg.position.set(-0.24, 0.45, 0);
+                const lFoot = new THREE.Mesh(new THREE.SphereGeometry(0.18, 14, 14), scalesMat);
+                lFoot.scale.set(0.9, 0.7, 1.3);
+                activeLimbs.leftLeg.add(lFoot);
+                playerGroup.add(activeLimbs.leftLeg);
+
+                activeLimbs.rightLeg = new THREE.Group();
+                activeLimbs.rightLeg.position.set(0.24, 0.45, 0);
+                const rFoot = new THREE.Mesh(new THREE.SphereGeometry(0.18, 14, 14), scalesMat);
+                rFoot.scale.set(0.9, 0.7, 1.3);
+                activeLimbs.rightLeg.add(rFoot);
+                playerGroup.add(activeLimbs.rightLeg);
+
+                // 靈動擺尾關節 (在動畫迴圈中動態搖擺)
+                activeLimbs.tail = new THREE.Group();
+                activeLimbs.tail.position.set(0, 0.7, -0.4);
+                const tailMesh = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.75, 12), scalesMat);
+                tailMesh.rotation.x = -Math.PI / 2.8;
+                tailMesh.position.z = -0.35;
+                activeLimbs.tail.add(tailMesh);
+
+                const tailTip = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 12), translucentFin);
+                tailTip.position.set(0, 0.32, -0.65);
+                activeLimbs.tail.add(tailTip);
+                playerGroup.add(activeLimbs.tail);
+            }
+        }
+
+        // ==========================================================
+        // 核心 2：日式侘寂與和風木質展場 (柔和啞光材質、去除塑膠油光)
+        // ==========================================================
+        function buildMatteWabiSabiShowroom() {
+            // 亞麻灰白微紋理牆面與溫潤淺橡木 (全部使用高 Roughness)
+            const ashWoodMat = new THREE.MeshStandardMaterial({ color: 0x3d2b20, roughness: 0.75 });
+            const lightOakMat = new THREE.MeshStandardMaterial({ color: 0x5c4333, roughness: 0.7 });
+            const washiPaperMat = new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.95 }); // 和紙
+
+            // 1. 地板 (沉穩霧面柚木，告別反光油面)
+            const floorGeo = new THREE.PlaneGeometry(120, 120);
+            const floorMat = new THREE.MeshStandardMaterial({
+                color: 0x221711,
+                roughness: 0.78, // 高粗糙度，漫反射啞光質感
+                metalness: 0.02
+            });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotation.x = -Math.PI / 2;
             floor.receiveShadow = true;
             scene.add(floor);
 
-            // 6. 建立真正的 Voxel 積木立體主角人物
-            player = new THREE.Group();
-            scene.add(player);
-            buildVoxelCharacter();
+            // 2. 主展場背牆 (木格柵與宣紙柔光屏風)
+            const backWall = new THREE.Mesh(new THREE.BoxGeometry(48, 16, 1.2), ashWoodMat);
+            backWall.position.set(0, 8, -16);
+            backWall.receiveShadow = true;
+            scene.add(backWall);
 
-            // 7. 建立 Voxel 積木茶館建築與精細茶具積木
-            buildVoxelArchitecture();
+            for (let i = -22; i <= 22; i += 2.2) {
+                const slat = new THREE.Mesh(new THREE.BoxGeometry(0.18, 13.5, 0.3), lightOakMat);
+                slat.position.set(i, 8, -15.3);
+                scene.add(slat);
+            }
 
-            // 事件監聽
-            window.addEventListener('resize', onWindowResize);
-            window.addEventListener('keydown', (e) => handleKey(e, true));
-            window.addEventListener('keyup', (e) => handleKey(e, false));
+            // 挑高實木樑柱
+            for (let z = -14; z <= 2; z += 5) {
+                const beam = new THREE.Mesh(new THREE.BoxGeometry(48, 0.55, 0.75), ashWoodMat);
+                beam.position.set(0, 14.5, z);
+                scene.add(beam);
 
-            initJoystick();
-            animate();
+                // 和風垂吊式柔光和紙方燈
+                [-8, 0, 8].forEach(x => {
+                    const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 3.5), ashWoodMat);
+                    wire.position.set(x, 12.8, z);
+                    scene.add(wire);
+
+                    const lantern = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.2, 0.9), washiPaperMat);
+                    lantern.position.set(x, 11.2, z);
+                    scene.add(lantern);
+                });
+            }
+
+            // 3. 實木迎賓茶道長吧台
+            const barBase = new THREE.Mesh(new THREE.BoxGeometry(8.5, 1.8, 2.4), lightOakMat);
+            barBase.position.set(0, 0.9, -1.2);
+            barBase.castShadow = true;
+            barBase.receiveShadow = true;
+            scene.add(barBase);
+
+            const barTop = new THREE.Mesh(new THREE.BoxGeometry(9.0, 0.16, 2.7), new THREE.MeshStandardMaterial({ color: 0x27201c, roughness: 0.6 }));
+            barTop.position.set(0, 1.88, -1.2);
+            barTop.castShadow = true;
+            scene.add(barTop);
+
+            // 吧台上方精緻擺件：收銀平板、木刻茶單
+            const tablet = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.04, 0.55), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.5 }));
+            tablet.rotation.x = -0.4;
+            tablet.position.set(-2.0, 2.05, -1.2);
+            scene.add(tablet);
+
+            const menu = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.65, 0.06), ashWoodMat);
+            menu.rotation.y = 0.3;
+            menu.position.set(2.0, 2.25, -1.2);
+            scene.add(menu);
+
+            // 4. 挑高實木多寶閣展架 (左右兩側)
+            [-9.5, 9.5].forEach(x => buildMatteShowcase(x));
+
+            // 5. 鎮店大型生態大水族箱 (沉木、水草、活魚)
+            buildLuxuryAquarium();
         }
 
-        // 用多個積木方塊精確拼湊出立體人物（Voxel Character）
-        function buildVoxelCharacter() {
-            const matBody = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.3 }); // 棕色夾克
-            const matPants = new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.4 }); // 深藍褲子
-            const matHead = new THREE.MeshStandardMaterial({ color: 0xfde68a, roughness: 0.2 });  // 膚色頭部
-            const matCap = new THREE.MeshStandardMaterial({ color: 0x059669, roughness: 0.3 });   // 綠色潮帽
+        function buildMatteShowcase(xPos) {
+            const woodMat = new THREE.MeshStandardMaterial({ color: 0x362316, roughness: 0.72 });
+            const height = 9, width = 6.5, depth = 2.2;
 
-            // 雙腿
-            const leftLeg = new THREE.Mesh(new Box(0.25, 0.6, 0.25), matPants);
-            leftLeg.position.set(-0.15, 0.3, 0); leftLeg.castShadow = true; player.add(leftLeg);
+            // 立柱
+            [-width/2, width/2].forEach(offset => {
+                const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.28, height, depth), woodMat);
+                pillar.position.set(xPos + offset, height/2, -8.5);
+                pillar.castShadow = true;
+                scene.add(pillar);
+            });
 
-            const rightLeg = new THREE.Mesh(new Box(0.25, 0.6, 0.25), matPants);
-            rightLeg.position.set(0.15, 0.3, 0); rightLeg.castShadow = true; player.add(rightLeg);
+            // 4層加厚層板與啞光未上釉商品
+            for (let lvl = 1; lvl <= 4; lvl++) {
+                const y = lvl * 2.0;
+                const shelf = new THREE.Mesh(new THREE.BoxGeometry(width, 0.2, depth), woodMat);
+                shelf.position.set(xPos, y, -8.5);
+                shelf.castShadow = true;
+                shelf.receiveShadow = true;
+                scene.add(shelf);
 
-            // 軀幹 (身體)
-            const torso = new THREE.Mesh(new Box(0.6, 0.8, 0.4), matBody);
-            torso.position.set(0, 1.0, 0); torso.castShadow = true; player.add(torso);
+                if (lvl === 1) {
+                    // 第 1 層：原礦未拋光紫砂西施壺 (陶土砂粒啞光質感)
+                    const pot = createMatteClayTeapot(0x8a3319);
+                    pot.position.set(xPos - 1.2, y + 0.1, -8.5);
+                    scene.add(pot);
 
-            // 頭部
-            const head = new THREE.Mesh(new Box(0.5, 0.5, 0.5), matHead);
-            head.position.set(0, 1.65, 0); head.castShadow = true; player.add(head);
+                    const cup = createMatteCeladonCup();
+                    cup.position.set(xPos + 1.2, y + 0.1, -8.5);
+                    scene.add(cup);
+                } else if (lvl === 2) {
+                    // 第 2 層：苔蘚微景觀透明造景缸
+                    const terrarium = createMossTerrarium();
+                    terrarium.position.set(xPos, y + 0.1, -8.5);
+                    scene.add(terrarium);
+                } else if (lvl === 3) {
+                    // 第 3 層：梨山高冷茶啞光紙罐 + 原木茶禮盒
+                    const can = createMatteTeaCanister();
+                    can.position.set(xPos - 1.1, y + 0.45, -8.5);
+                    scene.add(can);
 
-            // 帽子
-            const cap = new THREE.Mesh(new Box(0.55, 0.2, 0.6), matCap);
-            cap.position.set(0, 1.95, 0.05); cap.castShadow = true; player.add(cap);
-        }
-
-        // 簡化 Box 建立輔助函式
-        function Box(w, h, d) { return new THREE.BoxGeometry(w, h, d); }
-
-        // 用積木方塊拼湊出建築展架與精緻茶壺茶杯
-        function buildVoxelArchitecture() {
-            // 背景木紋主牆
-            const wall = new THREE.Mesh(new Box(40, 14, 1), new THREE.MeshStandardMaterial({ color: 0x140f0a }));
-            wall.position.set(0, 7, -14); scene.add(wall);
-
-            // 大型生態大魚缸
-            const tank = new THREE.Mesh(
-                new Box(6.5, 3.8, 2.2),
-                new THREE.MeshPhysicalMaterial({ color: 0x047857, transmission: 0.9, opacity: 1, transparent: true, roughness: 0.05, ior: 1.5 })
-            );
-            tank.position.set(0, 1.9, -9); scene.add(tank);
-
-            // 兩側展示架與積木茶具商品
-            [-8.5, 8.5].forEach(xPos => {
-                for(let level = 1; level <= 3; level++) {
-                    // 層板積木
-                    const shelf = new THREE.Mesh(new Box(3.8, 0.18, 1.6), new THREE.MeshStandardMaterial({ color: 0x2d1a0e }));
-                    shelf.position.set(xPos, level * 1.4, -7); scene.add(shelf);
-
-                    // 用積木拼湊出立體茶壺 (壺身 + 壺嘴 + 壺把)
-                    const teapotBody = new THREE.Mesh(new Box(0.4, 0.35, 0.4), new THREE.MeshStandardMaterial({ color: 0x9a3412 }));
-                    teapotBody.position.set(xPos - 0.5, level * 1.4 + 0.26, -7); scene.add(teapotBody);
-
-                    const teapotSpout = new THREE.Mesh(new Box(0.2, 0.1, 0.1), new THREE.MeshStandardMaterial({ color: 0x9a3412 }));
-                    teapotSpout.position.set(xPos - 0.75, level * 1.4 + 0.3, -7); scene.add(teapotSpout);
-
-                    // 積木瓷杯
-                    const cup = new THREE.Mesh(new Box(0.22, 0.3, 0.22), new THREE.MeshStandardMaterial({ color: 0xf3f4f6 }));
-                    cup.position.set(xPos + 0.6, level * 1.4 + 0.25, -7); scene.add(cup);
+                    const box = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.85, 1.1), woodMat);
+                    box.position.set(xPos + 1.1, y + 0.45, -8.5);
+                    scene.add(box);
+                } else {
+                    // 第 4 層：宜興深段泥石瓢壺
+                    const pot2 = createMatteClayTeapot(0x422a1d);
+                    pot2.position.set(xPos, y + 0.1, -8.5);
+                    scene.add(pot2);
                 }
-            });
-        }
-
-        // 手機虛擬搖桿
-        function initJoystick() {
-            const base = document.getElementById('joystick-base');
-            const stick = document.getElementById('joystick-stick');
-            let active = false;
-            let center = { x: 0, y: 0 };
-
-            base.addEventListener('pointerdown', (e) => {
-                active = true;
-                const rect = base.getBoundingClientRect();
-                center.x = rect.left + rect.width / 2;
-                center.y = rect.top + rect.height / 2;
-            });
-
-            window.addEventListener('pointermove', (e) => {
-                if (!active) return;
-                let dx = e.clientX - center.x;
-                let dy = e.clientY - center.y;
-                let dist = Math.sqrt(dx * dx + dy * dy);
-                let maxDist = 35;
-
-                if (dist > maxDist) {
-                    dx = (dx / dist) * maxDist;
-                    dy = (dy / dist) * maxDist;
-                }
-
-                stick.style.transform = `translate(${dx}px, ${dy}px)`;
-                joystickMove.x = dx / maxDist;
-                joystickMove.y = dy / maxDist;
-            });
-
-            window.addEventListener('pointerup', () => {
-                if (!active) return;
-                active = false;
-                stick.style.transform = `translate(0px, 0px)`;
-                joystickMove.x = 0;
-                joystickMove.y = 0;
-            });
-        }
-
-        function handleKey(e, isDown) {
-            switch(e.key.toLowerCase()) {
-                case 'w': case 'arrowup': keys.w = isDown; break;
-                case 'a': case 'arrowleft': keys.a = isDown; break;
-                case 's': case 'arrowdown': keys.s = isDown; break;
-                case 'd': case 'arrowright': keys.d = isDown; break;
             }
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
+        // ==========================================================
+        // 核心 3：極致商品精細度 (啞光原礦紫砂陶、青瓷杯、微景觀)
+        // ==========================================================
+        function createMatteClayTeapot(colorHex) {
+            const pot = new THREE.Group();
+            // 陶土原生啞光微砂質感 (高 Roughness 0.65，無金屬感)
+            const clayMat = new THREE.MeshStandardMaterial({
+                color: colorHex,
+                roughness: 0.68,
+                metalness: 0.05
+            });
 
-            const speed = 0.12;
-            let moveX = 0;
-            let moveZ = 0;
+            // 扁圓西施身筒
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 24), clayMat);
+            body.scale.set(1.12, 0.88, 1.12);
+            body.position.y = 0.38;
+            body.castShadow = true;
+            pot.add(body);
+
+            // 壓蓋口與倒把
+            const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.27, 0.08, 20), clayMat);
+            lid.position.y = 0.72;
+            pot.add(lid);
+            const knob = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 14), clayMat);
+            knob.position.y = 0.82;
+            pot.add(knob);
+
+            // 流暢短直壺嘴
+            const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.13, 0.32, 14), clayMat);
+            spout.rotation.z = -Math.PI / 3.4;
+            spout.position.set(0.48, 0.48, 0);
+            spout.castShadow = true;
+            pot.add(spout);
+
+            // 經典倒把
+            const handle = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.045, 12, 24, Math.PI * 1.15), clayMat);
+            handle.rotation.z = -Math.PI / 1.85;
+            handle.position.set(-0.46, 0.44, 0);
+            handle.castShadow = true;
+            pot.add(handle);
+
+            return pot;
+        }
+
+        function createMatteCeladonCup() {
+            const cup = new THREE.Group();
+            const celadonMat = new THREE.MeshStandardMaterial({ color: 0xd1fae5, roughness: 0.45, metalness: 0.05 }); // 溫潤粉青
+
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.16, 0.38, 20), celadonMat);
+            body.position.y = 0.22;
+            body.castShadow = true;
+            cup.add(body);
+
+            const teaSurface = new THREE.Mesh(new THREE.CircleGeometry(0.24, 20), new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.2 }));
+            teaSurface.rotation.x = -Math.PI / 2;
+            teaSurface.position.y = 0.36;
+            cup.add(teaSurface);
+
+            return cup;
+        }
+
+        function createMossTerrarium() {
+            const group = new THREE.Group();
+            const woodBase = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.65, 0.14, 24), new THREE.MeshStandardMaterial({ color: 0x3d2415, roughness: 0.7 }));
+            woodBase.position.y = 0.07;
+            group.add(woodBase);
+
+            // 黑火山岩
+            const rockMat = new THREE.MeshStandardMaterial({ color: 0x1f1f1f, roughness: 0.95 });
+            for (let i = 0; i < 3; i++) {
+                const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.16, 0), rockMat);
+                rock.position.set(-0.18 + i * 0.18, 0.18, (i % 2 === 0 ? 0.08 : -0.08));
+                group.add(rock);
+            }
+
+            // 鮮綠白髮蘚團
+            const mossMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.98 });
+            for (let j = 0; j < 5; j++) {
+                const moss = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 14), mossMat);
+                moss.position.set(-0.2 + j * 0.1, 0.28, (j % 2 === 0 ? -0.1 : 0.1));
+                group.add(moss);
+            }
+
+            // 微風透明玻璃球罩
+            const glassDome = new THREE.Mesh(
+                new THREE.SphereGeometry(0.55, 24, 24, 0, Math.PI * 2, 0, Math.PI * 0.72),
+                new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 0.94, roughness: 0.08, ior: 1.48, transparent: true })
+            );
+            glassDome.position.y = 0.14;
+            group.add(glassDome);
+
+            return group;
+        }
+
+        function createMatteTeaCanister() {
+            const group = new THREE.Group();
+            const canMat = new THREE.MeshStandardMaterial({ color: 0x064e3b, roughness: 0.75 }); // 霧面森林深綠
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.85, 24), canMat);
+            body.castShadow = true;
+            group.add(body);
+            const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.14, 24), canMat);
+            lid.position.y = 0.46;
+            group.add(lid);
+            return group;
+        }
+
+        // ==========================================================
+        // 核心 4：鎮店大水族箱 (沉木、水草、血玉紅龍、螢光魚游動擺尾)
+        // ==========================================================
+        function buildLuxuryAquarium() {
+            const w = 9.0, h = 4.8, d = 2.8;
+
+            // 超白厚玻璃
+            const glassTank = new THREE.Mesh(
+                new THREE.BoxGeometry(w, h, d),
+                new THREE.MeshPhysicalMaterial({
+                    color: 0x0284c7,
+                    transmission: 0.92,
+                    roughness: 0.06,
+                    ior: 1.46,
+                    transparent: true
+                })
+            );
+            glassTank.position.set(0, h / 2 + 1.0, -9.5);
+            scene.add(glassTank);
+
+            // 實木厚底座與白細砂
+            const base = new THREE.Mesh(new THREE.BoxGeometry(w + 0.6, 1.0, d + 0.6), new THREE.MeshStandardMaterial({ color: 0x24150c, roughness: 0.7 }));
+            base.position.set(0, 0.5, -9.5);
+            scene.add(base);
+
+            const sand = new THREE.Mesh(new THREE.BoxGeometry(w - 0.2, 0.35, d - 0.2), new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.9 }));
+            sand.position.set(0, 1.18, -9.5);
+            scene.add(sand);
+
+            // 沉木造景
+            const driftWood = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 4.2, 12), new THREE.MeshStandardMaterial({ color: 0x3f2314, roughness: 0.85 }));
+            driftWood.rotation.set(0.3, 0.4, 0.8);
+            driftWood.position.set(-1.2, 2.2, -9.5);
+            scene.add(driftWood);
+
+            // 水草簇
+            const weedMat = new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.85 });
+            for (let i = 0; i < 8; i++) {
+                const weed = new THREE.Mesh(new THREE.ConeGeometry(0.18, 1.4 + (i % 3) * 0.4, 8), weedMat);
+                weed.position.set(-3.2 + i * 0.9, 1.8, -9.5 + (i % 2 === 0 ? 0.3 : -0.3));
+                scene.add(weed);
+            }
+
+            // 1. 霸氣特選血玉紅龍魚 (帶擺尾關節)
+            const arowana = new THREE.Group();
+            const redFishMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.35, metalness: 0.3 });
+            const fishBody = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.45, 0.2), redFishMat);
+            arowana.add(fishBody);
+
+            const tailFin = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.65, 4), redFishMat);
+            tailFin.rotation.z = -Math.PI / 2;
+            tailFin.position.set(-0.95, 0, 0);
+            arowana.add(tailFin);
+
+            arowana.position.set(0, 3.4, -9.5);
+            scene.add(arowana);
+            animatedFishes.push({ mesh: arowana, tail: tailFin, speed: 0.022, range: 2.8, basePos: { x: 0, y: 3.4, z: -9.5 }, phase: 0 });
+
+            // 2. 螢光斑馬魚群
+            for (let k = 0; k < 4; k++) {
+                const neonFish = new THREE.Group();
+                const neonMat = new THREE.MeshStandardMaterial({
+                    color: k % 2 === 0 ? 0x06b6d4 : 0x10b981,
+                    emissive: k % 2 === 0 ? 0x0891b2 : 0x059669,
+                    emissiveIntensity: 0.8
+                });
+                const nBody = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.16, 0.08), neonMat);
+                neonFish.add(nBody);
+                const nTail = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.22, 4), neonMat);
+                nTail.rotation.z = -Math.PI / 2;
+                nTail.position.set(-0.28, 0, 0);
+                neonFish.add(nTail);
+
+                neonFish.position.set(-2.5 + k * 1.6, 2.2 + k * 0.4, -9.5);
+                scene.add(neonFish);
+                animatedFishes.push({ mesh: neonFish, tail: nTail, speed: 0.035 + k * 0.008, range: 2.5, basePos: { x: -2.5 + k * 1.6, y: 2.2 + k * 0.4, z: -9.5 }, phase: k * 1.4 });
+            }
+        }
+
+        // ==========================================================
+        // 控制系統：鍵盤 WASD、虛擬搖桿、流暢步態動畫
+        // ==========================================================
+        function setupControls() {
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keydown', (e) => setKey(e.key, true));
+            window.addEventListener('keyup', (e) => setKey(e.key, false));
+        }
+
+        function setKey(k, val) {
+            const key = k.toLowerCase();
+            if (key === 'w' || key === 'arrowup') keys.w = val;
+            if (key === 's' || key === 'arrowdown') keys.s = val;
+            if (key === 'a' || key === 'arrowleft') keys.a = val;
+            if (key === 'd' || key === 'arrowright') keys.d = val;
+        }
+
+        function setupJoystick() {
+            const base = document.getElementById('joystickBase');
+            const knob = document.getElementById('joystickKnob');
+            let dragging = false;
+            let center = { x: 0, y: 0 };
+            const maxR = 34;
+
+            function start(e) {
+                dragging = true;
+                const rect = base.getBoundingClientRect();
+                center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+                move(e);
+            }
+
+            function move(e) {
+                if (!dragging) return;
+                const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                let dx = cx - center.x;
+                let dy = cy - center.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist > maxR) {
+                    dx = (dx / dist) * maxR;
+                    dy = (dy / dist) * maxR;
+                }
+
+                knob.style.transform = `translate(${dx}px, ${dy}px)`;
+                joystickVector.x = dx / maxR;
+                joystickVector.y = dy / maxR;
+            }
+
+            function end() {
+                if (!dragging) return;
+                dragging = false;
+                knob.style.transform = `translate(0px, 0px)`;
+                joystickVector.x = 0;
+                joystickVector.y = 0;
+            }
+
+            base.addEventListener('mousedown', start);
+            window.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', end);
+
+            base.addEventListener('touchstart', start, { passive: true });
+            window.addEventListener('touchmove', move, { passive: true });
+            window.addEventListener('touchend', end);
+        }
+
+        function animateLoop() {
+            requestAnimationFrame(animateLoop);
+
+            const speed = 0.11;
+            let moveX = 0, moveZ = 0;
 
             if (keys.w) moveZ -= speed;
             if (keys.s) moveZ += speed;
             if (keys.a) moveX -= speed;
             if (keys.d) moveX += speed;
 
-            moveX += joystickMove.x * speed;
-            moveZ += joystickMove.y * speed;
+            moveX += joystickVector.x * speed;
+            moveZ += joystickVector.y * speed;
 
-            player.position.x += moveX;
-            player.position.z += moveZ;
+            const isMoving = Math.abs(moveX) > 0.01 || Math.abs(moveZ) > 0.01;
 
-            // 相機平滑跟隨主角，同時允許 OrbitControls 自由旋轉
-            controls.target.copy(player.position);
-            controls.target.y += 1.0;
+            if (playerGroup) {
+                playerGroup.position.x += moveX;
+                playerGroup.position.z += moveZ;
+
+                if (isMoving) {
+                    const targetAngle = Math.atan2(moveX, moveZ);
+                    playerGroup.rotation.y = targetAngle;
+
+                    // 肢體步態動畫
+                    walkCycle += 0.22;
+                    if (activeLimbs.leftLeg && activeLimbs.rightLeg) {
+                        activeLimbs.leftLeg.rotation.x = Math.sin(walkCycle) * 0.42;
+                        activeLimbs.rightLeg.rotation.x = -Math.sin(walkCycle) * 0.42;
+                    }
+                    if (activeLimbs.leftArm && activeLimbs.rightArm) {
+                        activeLimbs.leftArm.rotation.x = -Math.sin(walkCycle) * 0.42;
+                        activeLimbs.rightArm.rotation.x = Math.sin(walkCycle) * 0.42;
+                    }
+                    if (activeLimbs.tail) {
+                        activeLimbs.tail.rotation.y = Math.sin(walkCycle * 2) * 0.45;
+                    }
+                } else {
+                    walkCycle += 0.035;
+                    if (activeLimbs.leftLeg && activeLimbs.rightLeg) {
+                        activeLimbs.leftLeg.rotation.x = 0;
+                        activeLimbs.rightLeg.rotation.x = 0;
+                    }
+                    if (activeLimbs.leftArm && activeLimbs.rightArm) {
+                        activeLimbs.leftArm.rotation.x = Math.sin(walkCycle) * 0.06;
+                        activeLimbs.rightArm.rotation.x = -Math.sin(walkCycle) * 0.06;
+                    }
+                    if (activeLimbs.tail) {
+                        activeLimbs.tail.rotation.y = Math.sin(walkCycle) * 0.25;
+                    }
+                }
+
+                // 相機始終環繞聚焦在角色身上，同時解鎖滑鼠自由 360° 旋轉
+                controls.target.set(playerGroup.position.x, 1.4, playerGroup.position.z);
+            }
+
+            // 水族箱游魚擺尾巡游
+            animatedFishes.forEach(fish => {
+                fish.phase += fish.speed;
+                fish.mesh.position.x = fish.basePos.x + Math.sin(fish.phase) * fish.range;
+                fish.mesh.position.y = fish.basePos.y + Math.sin(fish.phase * 2) * 0.12;
+                fish.mesh.rotation.y = Math.cos(fish.phase) > 0 ? 0 : Math.PI;
+
+                if (fish.tail) {
+                    fish.tail.rotation.y = Math.sin(fish.phase * 8) * 0.35;
+                }
+            });
 
             controls.update();
             renderer.render(scene, camera);
@@ -348,45 +1275,59 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function showToast(msg) {
+        // ==========================================================
+        // 互動 UI：雙軌商城、塔羅占卜、導航切換
+        // ==========================================
+        function toggleModal(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+
+        function showToast(text) {
             const toast = document.getElementById('toast');
-            toast.innerText = msg;
+            toast.innerText = text;
             toast.style.opacity = '1';
-            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+            setTimeout(() => { toast.style.opacity = '0'; }, 3200);
         }
-        function buyItem(itemName) {
-            currentCoins += 500;
-            document.getElementById('coin-count').innerText = currentCoins.toLocaleString();
-            showToast(`🎉 成功解鎖「${itemName}」！`);
-            closeModal('shopModal');
-        }
-        function drawTarot() {
-            document.getElementById('tarotResult').innerText = "【大吉】今日梨山茶氣場旺盛，領取 1,000 G！";
-            currentCoins += 1000;
-            document.getElementById('coin-count').innerText = currentCoins.toLocaleString();
-            showToast("🔮 塔羅占卜完成！");
-        }
-        function switchZone(zone) {
-            ['store', 'warehouse'].forEach(z => {
-                const btn = document.getElementById(`btn-${z}`);
-                if(z === zone) {
-                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white shadow-lg";
-                } else {
-                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold glass-card text-gray-300 hover:text-white shadow";
-                }
-            });
-            if(zone === 'store') {
-                player.position.set(0, 0, 0);
-                showToast("🏮 已切換至 3D Voxel 積木茶館");
-            } else if(zone === 'warehouse') {
-                player.position.set(4, 0, -5);
-                showToast("🐟 已切換至 3D 水族養魚倉庫");
+
+        function purchaseGoods(name, cost) {
+            if (coins >= cost) {
+                coins -= cost;
+                document.getElementById('coinDisplay').innerText = coins.toLocaleString();
+                showToast(`🎉 成功以 ${cost.toLocaleString()} G 兌換「${name}」！專屬出貨單已生效！`);
+                toggleModal('shopModal');
+            } else {
+                showToast(`⚠️ 金幣不足！還差 ${(cost - coins).toLocaleString()} G，快去抽每日塔羅賺取金幣！`);
             }
         }
 
-        window.onload = init3D;
+        function drawTarotCard() {
+            const cards = [
+                { title: "【天池朝露】梨山高冷靈氣", desc: "今日運勢如清晨天池雪露，思緒通透靈動，適合品茗高冷手採茶！" },
+                { title: "【紫砂蘊香】宜興大師匠心", desc: "陶土吸收歲月精華，人際如溫潤茶湯，西施聚財納福。" },
+                { title: "【龍騰四海】水族生機鼎沸", desc: "紅龍擺尾引水聚富，螢光點點照耀前路，事業與探索皆大吉！" },
+                { title: "【青苔逢春】微景悠然自得", desc: "苔蘚在靜謐中自成天地，放慢步伐，生活亦能自洽芬芳。" }
+            ];
+            const pick = cards[Math.floor(Math.random() * cards.length)];
+            document.getElementById('tarotCardTitle').innerText = pick.title;
+            document.getElementById('tarotCardContent').innerText = pick.desc;
+
+            coins += 1000;
+            document.getElementById('coinDisplay').innerText = coins.toLocaleString();
+            showToast("🔮 塔羅指引領取成功！每日尋寶金幣 +1,000 G 已存入帳戶！");
+        }
+
+        function teleportTo(location) {
+            if (location === 'teabar') {
+                playerGroup.position.set(0, 0, 1.2);
+                showToast("🍵 已漫步至：迎賓茶道大理石吧台");
+            } else if (location === 'shelves') {
+                playerGroup.position.set(-6.5, 0, -5.5);
+                showToast("🫖 已漫步至：挑高多寶閣紫砂壺與茶葉展架");
+            } else if (location === 'aquarium') {
+                playerGroup.position.set(0, 0, -6.5);
+                showToast("🐟 已漫步至：鎮店生態大魚缸 (紅龍/螢光魚)");
+            }
+        }
     </script>
 </body>
 </html>
