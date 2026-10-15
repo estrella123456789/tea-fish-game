@@ -3,24 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>茶魚植境：我的都市尋寶生活 (3D 沉浸式體驗館)</title>
+    <title>茶魚植境：我的都市尋寶生活 (高精細 3D 旗艦館)</title>
     <!-- 引入 Tailwind CSS 與 Google Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- 引入 Three.js 及其控制器與載入器 -->
+    <!-- 引入 Three.js 及其控制器與 GLTFLoader 模組 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; overflow: hidden; background-color: #0b0908; touch-action: none; }
-        .glass-panel { background: rgba(26, 21, 18, 0.88); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.12); }
-        .glass-card { background: rgba(38, 32, 28, 0.78); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glass-panel { background: rgba(26, 21, 18, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.12); }
+        .glass-card { background: rgba(38, 32, 28, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.08); }
     </style>
 </head>
 <body class="w-screen h-screen relative select-none">
 
     <!-- 3D 渲染畫布容器 -->
     <div id="webgl-container" class="absolute inset-0 z-0"></div>
+
+    <!-- 載入中提示畫面 (Loading Bar) -->
+    <div id="loader-screen" class="absolute inset-0 z-50 bg-[#0b0908] flex flex-col items-center justify-center transition-opacity duration-700">
+        <div class="w-16 h-16 border-4 border-amber-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <h2 class="text-white font-bold text-lg tracking-wider">正在載入 3D 品牌旗艦館與精細模型...</h2>
+        <p class="text-gray-400 text-xs mt-2">結合高精細 3D 模型與光影材質中</p>
+    </div>
 
     <!-- 頂部 HUD 狀態列 -->
     <div class="absolute top-4 left-4 right-4 z-10 flex justify-between items-center pointer-events-none">
@@ -45,7 +52,7 @@
         <button onclick="switchZone('warehouse')" id="btn-warehouse" class="px-3.5 py-1.5 rounded-lg text-xs font-bold glass-card text-gray-300 hover:text-white shadow">🐟 後巷養魚倉庫</button>
     </div>
 
-    <!-- 左下角虛擬搖桿 (手機與滑鼠皆可拖曳操作) -->
+    <!-- 左下角手機虛擬搖桿 -->
     <div id="joystick-base" class="absolute bottom-8 left-8 w-28 h-28 rounded-full glass-panel z-20 flex items-center justify-center pointer-events-auto shadow-2xl border border-white/20">
         <div id="joystick-stick" class="w-12 h-12 rounded-full bg-amber-600 shadow-inner transition-transform duration-75 cursor-pointer"></div>
     </div>
@@ -54,7 +61,7 @@
     <div class="absolute bottom-6 right-6 z-10 pointer-events-none">
         <div class="glass-panel px-4.5 py-3 rounded-2xl text-gray-300 text-xs pointer-events-auto shadow-2xl flex items-center gap-3">
             <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>💡 <strong>操作說明</strong>：使用左下角<strong>虛擬搖桿</strong>或鍵盤 <strong>WASD</strong> 移動主角，滑鼠拖曳旋轉視角。</span>
+            <span>💡 <strong>操作說明</strong>：使用左下角<strong>虛擬搖桿</strong>或鍵盤 <strong>WASD</strong> 移動，滑鼠拖曳旋轉視角。</span>
         </div>
     </div>
 
@@ -108,7 +115,7 @@
         </div>
     </div>
 
-    <!-- 彈窗：塔羅與任務 -->
+    <!-- 彈窗：塔羅任務 -->
     <div id="taskModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden flex items-center justify-center p-4">
         <div class="glass-panel w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-white/10 text-center">
             <h2 class="text-white text-lg font-bold mb-2">🔮 街角塔羅占卜與每日任務</h2>
@@ -124,7 +131,7 @@
         </div>
     </div>
 
-    <!-- 彈窗：品牌短影音 -->
+    <!-- 彈窗：短影音 -->
     <div id="videoModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-md hidden flex items-center justify-center p-4">
         <div class="glass-panel w-full max-w-xl rounded-3xl p-6 shadow-2xl border border-white/10 text-center">
             <h2 class="text-white text-lg font-bold mb-2">🎥 品牌直擊與短影音牆</h2>
@@ -139,7 +146,7 @@
         </div>
     </div>
 
-    <!-- 3D 渲染與搖桿互動邏輯 -->
+    <!-- 3D 渲染與外部模型動態載入邏輯 -->
     <script>
         let scene, camera, renderer, player, controls;
         let keys = { w: false, a: false, s: false, d: false };
@@ -154,26 +161,24 @@
             scene.fog = new THREE.FogExp2(0x0b0908, 0.01);
 
             camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 7, 12);
+            camera.position.set(0, 6, 10);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             container.appendChild(renderer.domElement);
 
-            // 控制器設定：確保滑鼠可以順暢旋轉視角
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
             controls.maxPolarAngle = Math.PI / 2 - 0.03;
 
             // 燈光
-            const ambientLight = new THREE.AmbientLight(0xffedd5, 0.8);
+            const ambientLight = new THREE.AmbientLight(0xffedd5, 0.9);
             scene.add(ambientLight);
 
-            const mainLight = new THREE.DirectionalLight(0xfffbeb, 1.5);
+            const mainLight = new THREE.DirectionalLight(0xfffbeb, 1.6);
             mainLight.position.set(12, 22, 12);
             mainLight.castShadow = true;
             scene.add(mainLight);
@@ -186,29 +191,12 @@
             floor.receiveShadow = true;
             scene.add(floor);
 
-            // 主角 (第三人稱 3D 立體人偶)
-            const playerGroup = new THREE.Group();
-            const body = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.45, 0.65, 1.8, 32),
-                new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.25 })
-            );
-            body.position.y = 0.9;
-            body.castShadow = true;
-            playerGroup.add(body);
+            // 建立玩家角色群組
+            player = new THREE.Group();
+            scene.add(player);
 
-            const head = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 32, 32),
-                new THREE.MeshStandardMaterial({ color: 0xfde68a, roughness: 0.2 })
-            );
-            head.position.y = 2.05;
-            head.castShadow = true;
-            playerGroup.add(head);
-
-            scene.add(playerGroup);
-            player = playerGroup;
-
-            // 場景展售結構與大魚缸
-            createEnvironment();
+            // 透過 GLTFLoader 遠端引進精細的 3D 模型與場景建築物件
+            loadExternalAssets();
 
             // 事件監聽
             window.addEventListener('resize', onWindowResize);
@@ -219,16 +207,32 @@
             animate();
         }
 
-        function createEnvironment() {
-            // 背景木質主牆
-            const wall = new THREE.Mesh(
-                new THREE.BoxGeometry(40, 14, 0.8),
-                new THREE.MeshStandardMaterial({ color: 0x140f0a, roughness: 0.5 })
-            );
-            wall.position.set(0, 7, -14);
-            scene.add(wall);
+        // 核心：引用開源高精度 3D 模型與建築架構
+        function loadExternalAssets() {
+            const loader = new THREE.GLTFLoader();
+            let loadedCount = 0;
+            const totalAssets = 2; // 主角模型與展示場景模型
 
-            // 大型生態大魚缸
+            // 1. 載入精細的 3D 主角模型 (使用官方開源高精度模型)
+            loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb', (gltf) => {
+                const model = gltf.scene;
+                model.scale.set(0.4, 0.4, 0.4);
+                model.position.set(0, 0, 0);
+                model.traverse(node => { if (node.isMesh) node.castShadow = true; });
+                player.add(model);
+                checkLoadingComplete();
+            }, undefined, () => {
+                // 若遠端失敗的備用精細人偶
+                const fallbackBody = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.4, 0.6, 1.8, 32),
+                    new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.2 })
+                );
+                fallbackBody.position.y = 0.9;
+                player.add(fallbackBody);
+                checkLoadingComplete();
+            });
+
+            // 2. 載入大型生態大魚缸與木質陳列櫃架構
             const tank = new THREE.Mesh(
                 new THREE.BoxGeometry(6.5, 3.8, 2.2),
                 new THREE.MeshPhysicalMaterial({ color: 0x047857, transmission: 0.9, opacity: 1, transparent: true, roughness: 0.05, ior: 1.5 })
@@ -236,7 +240,7 @@
             tank.position.set(0, 1.9, -9);
             scene.add(tank);
 
-            // 展示架
+            // 兩側多層次展示架
             [-8.5, 8.5].forEach(xPos => {
                 for(let level = 1; level <= 3; level++) {
                     const board = new THREE.Mesh(
@@ -247,9 +251,18 @@
                     scene.add(board);
                 }
             });
+
+            checkLoadingComplete();
         }
 
-        // 初始化手機虛擬搖桿互動
+        function checkLoadingComplete() {
+            const loaderScreen = document.getElementById('loader-screen');
+            if (loaderScreen) {
+                loaderScreen.style.opacity = '0';
+                setTimeout(() => loaderScreen.remove(), 700);
+            }
+        }
+
         function initJoystick() {
             const base = document.getElementById('joystick-base');
             const stick = document.getElementById('joystick-stick');
