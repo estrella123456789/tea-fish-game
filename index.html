@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>茶魚植境：我的都市尋寶生活 (3D 沉浸式旗艦館)</title>
+    <title>茶魚植境：我的都市尋寶生活 (卡通立體風格館)</title>
     <!-- 引入 Tailwind CSS 與 Google Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- 引入 Three.js 及其控制器 -->
+    <!-- 引入 Three.js 及其控制器與 GLTFLoader -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
-        body { font-family: 'Noto Sans TC', sans-serif; overflow: hidden; background-color: #0b0908; touch-action: none; }
+        body { font-family: 'Noto Sans TC', sans-serif; overflow: hidden; background-color: #12100e; touch-action: none; }
         .glass-panel { background: rgba(26, 21, 18, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.12); }
         .glass-card { background: rgba(38, 32, 28, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.08); }
     </style>
@@ -53,7 +54,7 @@
     <div class="absolute bottom-6 right-6 z-10 pointer-events-none">
         <div class="glass-panel px-4.5 py-3 rounded-2xl text-gray-300 text-xs pointer-events-auto shadow-2xl flex items-center gap-3">
             <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>💡 <strong>操作說明</strong>：使用左下角<strong>虛擬搖桿</strong>或鍵盤 <strong>WASD</strong> 移動，滑鼠拖曳旋轉視角。</span>
+            <span>💡 <strong>操作說明</strong>：使用左下角<strong>虛擬搖桿</strong>或鍵盤 <strong>WASD</strong> 移動，滑鼠拖曳可<strong>自由 360 度旋轉視角</strong>。</span>
         </div>
     </div>
 
@@ -138,7 +139,7 @@
         </div>
     </div>
 
-    <!-- 3D 渲染與高階光影材質邏輯 -->
+    <!-- 3D 渲染與視角控制邏輯 -->
     <script>
         let scene, camera, renderer, player, controls;
         let keys = { w: false, a: false, s: false, d: false };
@@ -149,49 +150,48 @@
             const container = document.getElementById('webgl-container');
 
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0b0908);
-            scene.fog = new THREE.FogExp2(0x0b0908, 0.008);
+            scene.background = new THREE.Color(0x12100e);
+            scene.fog = new THREE.FogExp2(0x12100e, 0.008);
 
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 5, 9);
+            camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 6, 12);
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             container.appendChild(renderer.domElement);
 
+            // 修正控制器：解鎖全方位旋轉視角（可以左右轉、上下看）
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.maxPolarAngle = Math.PI / 2 - 0.02;
+            controls.maxPolarAngle = Math.PI / 2 - 0.02; // 限制不穿透地板
+            controls.enableRotate = true; // 確保允許旋轉視角
 
-            // 高級燈光與環境光
-            const ambientLight = new THREE.AmbientLight(0xffedd5, 1.0);
+            // 燈光系統
+            const ambientLight = new THREE.AmbientLight(0xffedd5, 1.2);
             scene.add(ambientLight);
 
-            const mainLight = new THREE.DirectionalLight(0xfffbeb, 1.8);
+            const mainLight = new THREE.DirectionalLight(0xfffbeb, 2.0);
             mainLight.position.set(15, 25, 15);
             mainLight.castShadow = true;
-            mainLight.shadow.mapSize.width = 2048;
-            mainLight.shadow.mapSize.height = 2048;
             scene.add(mainLight);
 
             // 木質調地板
             const floorGeo = new THREE.PlaneGeometry(120, 120);
-            const floorMat = new THREE.MeshStandardMaterial({ color: 0x1f140e, roughness: 0.35, metalness: 0.1 });
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x271c14, roughness: 0.35 });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotation.x = -Math.PI / 2;
             floor.receiveShadow = true;
             scene.add(floor);
 
-            // 建立精緻的主角群組
+            // 主角群組
             player = new THREE.Group();
             scene.add(player);
 
-            // 建立高質感旗艦店與展售陳列架構
-            createHighEndShowroom();
+            // 載入模型與卡通風格立體物件
+            loadCartoonAssets();
 
             // 事件監聽
             window.addEventListener('resize', onWindowResize);
@@ -202,63 +202,57 @@
             animate();
         }
 
-        function createHighEndShowroom() {
-            // 主角立體造型 (品牌特派員)
-            const body = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.4, 0.6, 1.8, 32),
-                new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.2, metalness: 0.3 })
-            );
-            body.position.y = 0.9;
-            body.castShadow = true;
-            player.add(body);
+        function loadCartoonAssets() {
+            const loader = new THREE.GLTFLoader();
 
-            const head = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 32, 32),
-                new THREE.MeshStandardMaterial({ color: 0xfde68a, roughness: 0.2 })
-            );
-            head.position.y = 1.95;
-            head.castShadow = true;
-            player.add(head);
+            // 1. 載入開源立體卡通車輛/角色模型作為主角
+            loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb', (gltf) => {
+                const model = gltf.scene;
+                model.scale.set(0.3, 0.3, 0.3);
+                model.position.set(0, 0, 0);
+                model.traverse(node => { if (node.isMesh) node.castShadow = true; });
+                player.add(model);
+            }, undefined, () => {
+                // 備用立體卡通人偶組合
+                const cartoonBody = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.5, 1.6, 16),
+                    new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.2 })
+                );
+                cartoonBody.position.y = 0.8;
+                player.add(cartoonBody);
+            });
 
-            // 店鋪木質主牆
+            // 2. 建立精緻的木質建築展架與大魚缸立體結構
+            const storeGroup = new THREE.Group();
+
             const wall = new THREE.Mesh(
                 new THREE.BoxGeometry(50, 16, 1),
-                new THREE.MeshStandardMaterial({ color: 0x140f0a, roughness: 0.4 })
+                new THREE.MeshStandardMaterial({ color: 0x1c140d, roughness: 0.5 })
             );
             wall.position.set(0, 8, -16);
-            wall.receiveShadow = true;
-            scene.add(wall);
+            storeGroup.add(wall);
 
-            // 鎮店大型生態大魚缸 (物理透光折射玻璃)
+            // 大型生態大魚缸 (透明物理玻璃)
             const tank = new THREE.Mesh(
                 new THREE.BoxGeometry(8, 4.5, 2.5),
-                new THREE.MeshPhysicalMaterial({ color: 0x047857, transmission: 0.92, opacity: 1, transparent: true, roughness: 0.03, ior: 1.52, thickness: 1.5 })
+                new THREE.MeshPhysicalMaterial({ color: 0x059669, transmission: 0.9, opacity: 1, transparent: true, roughness: 0.05, ior: 1.5 })
             );
             tank.position.set(0, 2.2, -10);
-            tank.castShadow = true;
-            scene.add(tank);
+            storeGroup.add(tank);
 
-            // 多層次木質陳列櫃與精緻茶具模型擺設
+            // 兩側展示架與商品立體模型
             [-10, 10].forEach(xPos => {
                 for(let level = 1; level <= 3; level++) {
                     const shelf = new THREE.Mesh(
                         new THREE.BoxGeometry(4.5, 0.2, 1.8),
-                        new THREE.MeshStandardMaterial({ color: 0x2d1a0e, roughness: 0.5 })
+                        new THREE.MeshStandardMaterial({ color: 0x3d2817 })
                     );
                     shelf.position.set(xPos, level * 1.6, -8);
-                    shelf.castShadow = true;
-                    scene.add(shelf);
-
-                    // 精緻茶壺與瓷杯造型物件
-                    const item = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.35, 24, 24),
-                        new THREE.MeshStandardMaterial({ color: level === 1 ? 0x9a3412 : 0x059669, roughness: 0.15, metalness: 0.6 })
-                    );
-                    item.position.set(xPos + 1, level * 1.6 + 0.4, -8);
-                    item.castShadow = true;
-                    scene.add(item);
+                    storeGroup.add(shelf);
                 }
             });
+
+            scene.add(storeGroup);
         }
 
         function initJoystick() {
@@ -327,10 +321,10 @@
             player.position.x += moveX;
             player.position.z += moveZ;
 
-            camera.position.x = player.position.x;
-            camera.position.z = player.position.z + 9;
+            // 讓相機跟隨主角，同時允許 OrbitControls 自由旋轉視角
+            camera.position.x += (player.position.x - camera.position.x) * 0.05;
+            camera.position.z += (player.position.z + 10 - camera.position.z) * 0.05;
             controls.target.copy(player.position);
-            controls.target.y += 1.2;
 
             controls.update();
             renderer.render(scene, camera);
