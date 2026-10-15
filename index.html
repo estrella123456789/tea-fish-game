@@ -1,430 +1,374 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>《茶魚植境：都市探索 3D 沉浸旗艦版》</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<style>
-:root{--gold:#d99b26;--grn:#3b6e4c;--moss:#529e67;--aqua:#2ca8c2}
-*{box-sizing:border-box;margin:0;padding:0;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;user-select:none;-webkit-user-select:none}
-body,html{width:100%;height:100%;overflow:hidden;background:#1a2421;color:#f5efe6}
-#canvas-box{position:absolute;inset:0;z-index:1}
-
-/* 頂部質感半透明導覽列 */
-.top-hud{position:absolute;top:14px;left:14px;right:14px;z-index:10;display:flex;justify-content:space-between;align-items:center;background:rgba(25,35,30,0.85);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.18);border-radius:14px;padding:10px 18px;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,0.4)}
-.hud-group{display:flex;gap:12px;align-items:center;font-size:.88rem}
-.hud-pill{background:rgba(255,255,255,0.1);padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15)}
-.hud-pill b{color:var(--gold)}
-
-/* 左下角：流暢虛擬搖桿 */
-#joystick-zone{position:absolute;bottom:30px;left:30px;width:130px;height:130px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.25);border-radius:50%;z-index:10;touch-action:none;display:flex;justify-content:center;align-items:center}
-#joystick-knob{width:54px;height:54px;background:linear-gradient(135deg,#e6b347,#b88214);border-radius:50%;position:absolute;box-shadow:0 4px 15px rgba(0,0,0,0.5);pointer-events:none}
-
-/* 右下角：互動動作按鈕 */
-#action-btn{position:absolute;bottom:40px;right:35px;width:82px;height:82px;background:linear-gradient(135deg,#e6b347,#b88214);color:#fff;border-radius:50%;border:none;font-weight:700;font-size:.95rem;z-index:10;box-shadow:0 8px 24px rgba(230,179,71,0.5);cursor:pointer;display:none;align-items:center;justify-content:center;text-align:center;transition:transform 0.1s}
-#action-btn:active{transform:scale(0.92)}
-
-/* 畫面中央沈浸式提示 */
-.world-hint{position:absolute;top:76px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.65);color:#ffd666;padding:7px 16px;border-radius:20px;font-size:.85rem;font-weight:600;z-index:10;border:1px solid rgba(230,179,71,0.4);pointer-events:none;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,0.4)}
-
-/* 通用彈出視窗 */
-.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);display:none;justify-content:center;align-items:center;padding:16px}
-.modal.open{display:flex}
-.mbox{width:100%;max-width:940px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;background:#1c1613;border:1px solid var(--gold);border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,0.8)}
-.mhead{padding:16px 22px;background:#2a2019;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,0.1)}
-.mbody{padding:20px;overflow-y:auto;flex:1}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px}
-.card{background:#261d17;border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;position:relative}
-.card:hover{border-color:var(--gold)}
-#toast{position:fixed;top:84px;right:20px;z-index:99;background:#203828;border:1px solid var(--moss);color:#fff;padding:12px 18px;border-radius:10px;font-size:.88rem;box-shadow:0 8px 24px rgba(0,0,0,0.5);display:none;max-width:340px}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>茶魚植境：我的都市尋寶生活 (3D 沉浸式體驗館)</title>
+    <!-- 引入 Tailwind CSS 與 Google Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- 引入 Three.js 及其控制與載入外掛 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; overflow: hidden; background-color: #1a1614; }
+        .glass-panel { background: rgba(30, 25, 22, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass-card { background: rgba(45, 38, 33, 0.7); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    </style>
 </head>
-<body>
-<div id="canvas-box"></div>
-<div id="toast"></div>
+<body class="w-screen h-screen relative select-none">
 
-<!-- 頂部質感狀態列 -->
-<header class="top-hud">
-  <div class="hud-group">
-    <span>🍵🐟🌱 <b>茶魚植境：沉浸探索版</b></span>
-    <span class="hud-pill" id="hud-lv">Lv.1 新居民</span>
-  </div>
-  <div class="hud-group">
-    <div class="hud-pill">🪙 金幣: <b id="hud-coin">500</b></div>
-    <div class="hud-pill">✨ 聲望: <b id="hud-rep">10</b></div>
-    <button style="background:var(--gold);color:#fff;border:none;padding:6px 14px;border-radius:8px;font-weight:700;cursor:pointer" onclick="openShop('coin')">🛒 開啟商城</button>
-    <button style="background:#2ca8c2;color:#fff;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer" onclick="downloadSelf()">💾 下載網頁</button>
-  </div>
-</header>
+    <!-- 3D 渲染畫布容器 -->
+    <div id="webgl-container" class="absolute inset-0 z-0"></div>
 
-<!-- 畫面中央提示 -->
-<div class="world-hint" id="world-hint">🕹️ 左下角搖桿移動，右半邊滑動螢幕旋轉視角！走到建築物大門即可走進室內！</div>
-
-<!-- 左下角虛擬搖桿 -->
-<div id="joystick-zone"><div id="joystick-knob"></div></div>
-
-<!-- 右下角互動動作按鈕 -->
-<button id="action-btn" onclick="triggerCurrentAction()">互動</button>
-
-<!-- 商城 Modal -->
-<div class="modal" id="m-shop"><div class="mbox">
-  <div class="mhead"><h3 style="color:var(--gold)">🛒 茶魚植境・102品項旗艦商城</h3><button style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer" onclick="closeM('m-shop')">✕</button></div>
-  <div class="mbody">
-    <div style="display:flex;gap:10px;margin-bottom:12px">
-      <button style="flex:1;padding:10px;background:#3b6e4c;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="switchMode('coin')">🪙 遊戲金幣購買</button>
-      <button style="flex:1;padding:10px;background:#24583c;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="switchMode('real')">💳 真錢商城 (VIP 85折)</button>
+    <!-- 頂部 HUD 狀態列 -->
+    <div class="absolute top-4 left-4 right-4 z-10 flex justify-between items-center pointer-events-none">
+        <div class="glass-panel px-5 py-3 rounded-2xl flex items-center gap-4 pointer-events-auto shadow-2xl">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-600 to-emerald-500 flex items-center justify-center text-white font-bold text-lg shadow-inner">茶</div>
+            <div>
+                <h1 class="text-white font-bold text-sm tracking-wide">茶魚植境：我的都市尋寶生活</h1>
+                <p class="text-amber-400 text-xs flex items-center gap-2"><span>Lv.1 探索特派員</span> <span>💰 金幣: <strong id="coin-count">12,500</strong> G</span></p>
+            </div>
+        </div>
+        <div class="flex gap-2 pointer-events-auto">
+            <button onclick="openModal('shopModal')" class="glass-panel px-4 py-2.5 rounded-xl text-white text-sm font-medium hover:bg-amber-900/40 transition flex items-center gap-2 shadow-lg">🛒 雙軌商城 (102品項)</button>
+            <button onclick="openModal('taskModal')" class="glass-panel px-4 py-2.5 rounded-xl text-white text-sm font-medium hover:bg-emerald-900/40 transition flex items-center gap-2 shadow-lg">📜 塔羅與任務</button>
+            <button onclick="openModal('videoModal')" class="glass-panel px-4 py-2.5 rounded-xl text-white text-sm font-medium hover:bg-purple-900/40 transition flex items-center gap-2 shadow-lg">🎥 品牌短影音</button>
+        </div>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
-      <button style="padding:6px 12px;background:#333;color:#fff;border:none;border-radius:15px;cursor:pointer" onclick="setCat('ALL',this)">全部(102)</button>
-      <button style="padding:6px 12px;background:#333;color:#fff;border:none;border-radius:15px;cursor:pointer" onclick="setCat('TEA',this)">🍵 梨山茶(22)</button>
-      <button style="padding:6px 12px;background:#333;color:#fff;border:none;border-radius:15px;cursor:pointer" onclick="setCat('WARE',this)">🫖 宜興茶具(22)</button>
-      <button style="padding:6px 12px;background:#333;color:#fff;border:none;border-radius:15px;cursor:pointer" onclick="setCat('PLANT',this)">🌱 苔蘚缸/螢光魚瓶/發財樹(22)</button>
-      <button style="padding:6px 12px;background:#333;color:#fff;border:none;border-radius:15px;cursor:pointer" onclick="setCat('FISH',this)">🐟 倉庫觀賞魚/紅龍(24)</button>
-      <button style="padding:6px 12px;background:#333;color:#fff;border:none;border-radius:15px;cursor:pointer" onclick="setCat('BUNDLE',this)">🎁 組合包(12)</button>
+
+    <!-- 左上角分區導覽標籤 -->
+    <div class="absolute top-20 left-4 z-10 flex gap-2 pointer-events-auto">
+        <button onclick="switchZone('street')" id="btn-street" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white shadow">🌳 陽光草地街道</button>
+        <button onclick="switchZone('store')" id="btn-store" class="px-3 py-1.5 rounded-lg text-xs font-bold glass-card text-gray-300 hover:text-white shadow">🏮 旗艦木質茶館</button>
+        <button onclick="switchZone('warehouse')" id="btn-warehouse" class="px-3 py-1.5 rounded-lg text-xs font-bold glass-card text-gray-300 hover:text-white shadow">🐟 後巷養魚倉庫</button>
     </div>
-    <div class="grid" id="p-grid"></div>
-  </div>
-</div></div>
 
-<!-- 塔羅 Modal -->
-<div class="modal" id="m-tarot"><div class="mbox" style="max-width:820px">
-  <div class="mhead"><h3 style="color:var(--gold)">🔮 街角塔羅占卜攤 — 觸發 NPC 委託</h3><button style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer" onclick="closeM('m-tarot')">✕</button></div>
-  <div class="mbody"><div class="grid" id="t-grid"></div></div>
-</div></div>
-
-<!-- 直播 Modal -->
-<div class="modal" id="m-live"><div class="mbox" style="max-width:700px">
-  <div class="mhead" style="background:#4a1818"><h3 style="color:#ff7875">🔴 官方直播間 & 互動中心</h3><button style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer" onclick="closeM('m-live')">✕</button></div>
-  <div class="mbody">
-    <p style="background:#261b16;padding:14px;border-radius:10px;font-size:.9rem;line-height:1.5;margin-bottom:14px">
-      🎙️ <b>店長直播中：</b>「歡迎來到茶魚植境線上直播！今天開箱倉庫的血豔辣椒紅龍魚、超會生小魚的孔雀航母、透明罩苔蘚缸與宜興紫砂壺泡梨山茶！點擊下方參與搶紅包！」
-    </p>
-    <div style="background:#161210;padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);margin-bottom:14px">
-      <b style="color:var(--gold);font-size:.92rem" id="lz-q"></b>
-      <div id="lz-opts" style="display:flex;flex-direction:column;gap:8px;margin-top:10px"></div>
+    <!-- 底部操作提示與虛擬搖桿預留區 -->
+    <div class="absolute bottom-6 left-6 right-6 z-10 flex justify-between items-end pointer-events-none">
+        <div class="glass-panel px-4 py-2.5 rounded-xl text-gray-300 text-xs pointer-events-auto shadow-xl flex items-center gap-3">
+            <span class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>💡 <strong>操作說明</strong>：鍵盤 <strong>WASD / 方向鍵</strong> 在場景中移動，滑鼠拖曳旋轉 3D 視角，點擊物件互動。</span>
+        </div>
+        <div class="glass-panel px-4 py-2.5 rounded-xl text-white text-xs font-semibold pointer-events-auto shadow-xl flex items-center gap-3 bg-amber-700/80">
+            <span>✨ 正在展示：高品質 PBR 光影與擬真材質 3D 空間</span>
+        </div>
     </div>
-    <button style="width:100%;padding:12px;background:var(--grn);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="liveBonus()">🧧 領取直播紅包 (+$200)</button>
-  </div>
-</div></div>
 
-<!-- 小窩養成 Modal -->
-<div class="modal" id="m-loft"><div class="mbox" style="max-width:720px">
-  <div class="mhead"><h3 style="color:var(--gold)">🏡 我的北歐風木質小窩 — 養壺與繁殖小魚</h3><button style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer" onclick="closeM('m-loft')">✕</button></div>
-  <div class="mbody" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px">
-    <div class="card">
-      <h4 style="color:#0277bd">🐟 孔雀航母繁殖缸</h4>
-      <p style="font-size:.8rem;color:#ccc;margin:8px 0">待售新生小魚：<b id="l-fry" style="color:var(--gold)">0</b> 尾</p>
-      <button style="padding:9px;background:var(--aqua);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="sellFry()">💰 賣小魚給水族館</button>
+    <!-- 互動訊息提示框 (Toast) -->
+    <div id="toast" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-20 glass-panel px-6 py-3 rounded-2xl text-white text-sm shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none">
+        訊息提示...
     </div>
-    <div class="card">
-      <h4 style="color:var(--gold)">🫖 宜興紫砂養壺席</h4>
-      <p style="font-size:.8rem;color:#ccc;margin:8px 0">壺身包漿溫潤度：<b id="l-pat" style="color:var(--gold)">10%</b></p>
-      <button style="padding:9px;background:var(--grn);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer" onclick="brewTea()">🍵 泡梨山茶養壺</button>
+
+    <!-- 彈窗：雙軌商城 -->
+    <div id="shopModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-4xl max-h-[85vh] rounded-3xl p-6 flex flex-col shadow-2xl border border-white/10">
+            <div class="flex justify-between items-center mb-4 pb-3 border-b border-white/10">
+                <h2 class="text-white text-lg font-bold flex items-center gap-2">🛒 雙軌商城 (金幣兌換 / 現金直購)</h2>
+                <button onclick="closeModal('shopModal')" class="text-gray-400 hover:text-white text-xl font-bold px-3 py-1 rounded-lg bg-white/5">✕</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-y-auto pr-2">
+                <!-- 商品 1 -->
+                <div class="glass-card p-4 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <div class="h-32 bg-gradient-to-br from-amber-800 to-amber-950 rounded-xl mb-3 flex items-center justify-center text-4xl shadow-inner">🍵</div>
+                        <h3 class="text-white font-bold text-sm">梨山新佳陽高山茶 (四兩)</h3>
+                        <p class="text-gray-400 text-xs mt-1">海拔 2000 公尺以上，果香清甜，回甘持久。</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/10 flex justify-between items-center">
+                        <div>
+                            <p class="text-amber-400 font-bold text-xs">8,750 G</p>
+                            <p class="text-gray-400 text-[10px]">或現金 NT$875</p>
+                        </div>
+                        <button onclick="buyItem('梨山新佳陽高山茶')" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow">立即擁有</button>
+                    </div>
+                </div>
+                <!-- 商品 2 -->
+                <div class="glass-card p-4 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <div class="h-32 bg-gradient-to-br from-purple-900 to-indigo-950 rounded-xl mb-3 flex items-center justify-center text-4xl shadow-inner">🫖</div>
+                        <h3 class="text-white font-bold text-sm">宜興原礦紫砂西施壺</h3>
+                        <p class="text-gray-400 text-xs mt-1">透气性佳，泡茶首選，大師手作工藝。</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/10 flex justify-between items-center">
+                        <div>
+                            <p class="text-amber-400 font-bold text-xs">28,000 G</p>
+                            <p class="text-gray-400 text-[10px]">或現金 NT$3,200</p>
+                        </div>
+                        <button onclick="buyItem('宜興原礦紫砂西施壺')" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow">立即擁有</button>
+                    </div>
+                </div>
+                <!-- 商品 3 -->
+                <div class="glass-card p-4 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <div class="h-32 bg-gradient-to-br from-emerald-900 to-teal-950 rounded-xl mb-3 flex items-center justify-center text-4xl shadow-inner">🌿</div>
+                        <h3 class="text-white font-bold text-sm">微型苔蘚生態透明罩造景缸</h3>
+                        <p class="text-gray-400 text-xs mt-1">辦公室療癒小物，免頻繁澆水微景觀。</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-white/10 flex justify-between items-center">
+                        <div>
+                            <p class="text-amber-400 font-bold text-xs">6,800 G</p>
+                            <p class="text-gray-400 text-[10px]">或現金 NT$980</p>
+                        </div>
+                        <button onclick="buyItem('微型苔蘚生態透明罩造景缸')" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition shadow">立即擁有</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-</div></div>
 
-<script>
-// 102項商品壓縮與塔羅系統
-const RAW_DB = {
-  TEA: ["梨山日常冷熱泡原葉立體茶包(20入)|300|300|梨山原片切製三角茶包|恢復+30體力","梨山迎香金萱原葉茶包(20入)|280|280|天然奶香桂花香|恢復+25體力","梨山蜜香紅茶包(20入)|320|350|小綠葉蟬著涎熟果蜜香|恢復+35體力","古法炭焙凍頂烏龍茶包|300|300|龍眼木炭慢火烘焙韻味醇厚|恢復+30體力","梨山甘露翠玉冷泡茶包|480|500|冰鎮高山甘甜|自動回體力","梨山不知春冬片二兩罐|380|420|冬季低溫香氣奔放|品味+10","環山手採高山青茶四兩|900|1000|海拔1750m茶湯蜜綠|品味+18","思源埡口迷霧高冷春茶|1100|1250|風口雲霧繚繞茶氣清冽|品味+22","新佳陽手採軟枝烏龍|1200|1500|果膠豐富水蜜桃甜香|聲望+25","松茂三分火輕焙烏龍|1380|1680|微火烘焙添溫潤米香|品味+28","翠巒北線極品冬片|1500|1800|向陽坡葉肉肥厚入口即化|品味+32","武陵雪水灌溉金萱烏龍|1800|2200|純淨溪水灌溉奶香交融|品味+38","天府著涎貴妃烏龍|2400|2800|荔枝蜜香層次豐富|品味+45","碧綠溪2100m高冷春茶|2600|3200|日夜溫差大生津持久|品味+52","翠峰高海拔手採冬茶|3200|3800|水路細膩冷香沉穩|品味+60","大禹嶺交界95K雲端烏龍|3600|4200|原始森林芬多精香|品味+68","福壽山極品高冷春茶|4500|5200|指標茶區花香冷冽|聲望+80","華崗水源頭冷韻冬茶|5200|6000|極高海拔茶湯滑軟如絲|聲望+95","20年老甕藏梨山老茶|6800|8000|歲月封甕藥香梅香迷人|聲望+120","翠巒正叢頭水春茶一斤|8800|10000|頭水鮮芽大份量|聲望+140","華崗霜降凝香頂級冬茶|12800|15000|高山寒霜果膠濃稠|聲望+180","梨山特等獎比賽茶王|16800|22000|奪冠之作封籤典藏|聲望+250"],
-  WARE: ["胡桃木竹編隔熱茶墊|280|320|簡約木質保護桌面|品味+5","蘇州宋錦養壺茶墊|350|400|織錦典雅不怕磕碰|養壺加速+15%","小葉紫檀蓮花茶墊|680|800|沉水紫檀越用越亮|聲望+15","宜興招財噴水金蟾茶寵|450|500|熱茶淋洗吐水冒泡|額外+$40金幣","段泥霸氣龍魚茶寵|580|650|茶魚雙修造型精緻|聲望+20","黑檀木六君子茶道組|880|1000|功夫茶必備行頭|品味+18","高硼硅胡桃木公道杯|550|600|透明欣賞梨山綠茶湯|品味+12","景德鎮甜白瓷品茗杯4入|680|800|胎薄如蟬翼潔白如玉|品味+16","青花瓷纏枝蓮主人杯|980|1150|傳統手繪對飲江湖情|聲望+22","汝窯天青釉開片品茗杯|1280|1500|自然形成金絲鐵線紋|品味+30","德化羊脂玉白瓷鈴鐺杯|1500|1800|溫潤如凝脂美玉|品味+35","建陽建盞曜變油滴杯|1880|2200|高含鐵軟化水質|品味+40","宜興清水泥孟臣水平壺|2200|2600|雙氣孔結構新手寶|聲望+45","宜興趙庄朱泥西施壺|2680|3500|逼熱揚香泡青茶絕配|聲望+55","黃龍山底槽清仿古壺|3600|4200|砂感明顯端莊大器|聲望+65","黃金段泥竹節井欄壺|4200|5000|雙面手工刻繪書法|品味+75","宜興降坡泥容天壺|4800|5600|黃紅共生金砂隱現|品味+85","本山綠泥梨形思亭壺|5600|6500|稀少泥料專泡頂級春茶|品味+95","老紫泥子冶石瓢壺|6800|8500|三角剛勁出水流暢|聲望+110","大紅袍朱泥龍蛋壺|8800|10500|紅如寶石聚熱揚香|品味+135","天青泥歲寒三友報春壺|13800|16000|花貨雕塑栩栩如生|品味+180","陳腐30年底槽清供春壺|22000|28000|鎮店孤品樹癭節逸品|聲望+260"],
-  PLANT: ["黃金葛螢光魚共生瓶|380|420|水培淨水附2條螢光魚|被動+$30","富貴竹藍螢光魚瓶|450|500|富貴竹搭配藍光螢光魚|被動+$40","白網紋草綠螢光魚球|480|550|水晶球搭配綠螢光魚|被動+$45","圓葉椒草橘螢光魚瓶|550|620|胡桃木底座橙橘螢光魚|被動+$55","九冠水草火山石紫魚缸|680|780|培菌免換水紫螢光魚|被動+$70","懸浮綠球藻金螢光魚瓶|880|1000|北海道綠球藻金魚共生|被動+$100","膠囊透明罩白髮蘚微景|980|1100|高透光鎖濕度微景觀|品味+22","鐘型罩大灰蘚森林缸|1580|1800|造景師手作松皮石山巒|品味+35","圓頂罩狼尾蕨雨林缸|2280|2800|自給自足微水循環|聲望+50","木質底座溪流苔蘚缸|2980|3500|白砂模擬山澗溪流禪意|聲望+65","鑽石切面捕蟲堇水苔缸|3200|3800|幾何罩開紫花捕蟲堇|品味+70","LED呼吸燈枯山水茶亭|4500|5200|頂部生長燈夜間發光|品味+95","巨蛋瀑布造霧苔蘚缸|6800|8000|旗艦作內建瀑布造霧|聲望+150","桌上型獨木小發財樹|480|550|原木盆綠葉招財首選|賞金永久+3%","五辮編織中型發財樹|1280|1500|五路財神匯聚胡桃木盆|賞金+8%","九宮格落地霸氣發財樹|3200|3800|150cm落地老樁大哥款|賞金+15%","日本海島圓葉竹柏盆景|680|750|避邪招財發財竹柏|品味+18","裂葉龜背芋實木花架|1180|1350|熱帶溫室生命力活力|品味+30","黑釉木紋盆金錢樹|1480|1700|葉如古錢耐旱商務送禮|賞金+10%","上板二岐鹿角蕨碳化板|1880|2200|雄鹿之角掛牆面藝品|品味+45","迎客松真柏舍利幹盆景|2680|3200|蒼勁真柏東方禪意美學|品味+60","百年流木蝴蝶蘭空氣鳳梨|4800|5800|立體植物雕塑孤品|品味+110"],
-  FISH: ["日光燈魚|5|20|銅板價閃耀霓虹光帶|魚缸活力+2","米克斯小孔雀魚|5|20|強健好養新手必買|魚缸活力+2","仙子斑馬魚|10|35|游動極快象徵財源滾滾|魚缸活力+4","米奇魚/紅球魚|10|35|尾根米奇頭討喜可愛|魚缸活力+4","極火蝦/大和米蝦|10|35|天然清潔隊除藻喜氣|魚缸活力+4","五彩基因螢光魚|25|70|單買加進水生植物瓶|魚缸活力+8","黃金青苔鼠/熊貓鼠|30|80|呆萌底棲魚清除殘餌|魚缸活力+10","莫斯科藍純種孔雀魚|50|180|金屬寶藍色尾鰭飄逸|魚缸聲望+15","全紅白子紅眼孔雀魚|50|180|酒紅透亮雙眼極度搶眼|魚缸聲望+15","德系黃尾禮服孔雀魚|50|180|黑燕尾禮服金黃尾鰭|魚缸聲望+15","大耳馬賽克蕾絲孔雀|50|180|胸鰭如象耳蕾絲紋路|魚缸聲望+18","霸氣孔雀航母(爆肚種母)|50|200|超大體型極易爆缸生魚|自動生小魚賣錢","皇家藍尾特級孔雀航母|120|400|一胎產50~80尾小魚|高速生魚","泰系半月鬥魚/國王鬥魚|250|600|展鰭180度色澤華麗|魚缸聲望+28","泰金獅頭/蘭壽金魚|680|1200|獅子頭球形討喜可愛|魚缸聲望+35","珍珠羅漢魚苗|1500|2500|頭頂明顯隆起起頭靈性|魚缸聲望+50","A級元寶血鸚鵡(血玉)|2200|3200|渾圓如紅元寶招財名魚|任務賞金+10%","紅財神血玉(會互動)|3800|5000|倉庫嚴選通紅赤玉|賞金+15%","賽級帝王血玉皇|6800|8800|手掌大巨型體態紅冠|賞金+20%","皇冠黑白魟魚(滿天星)|12000|15000|絲絨圓盤貼底滑行幽浮|魚缸聲望+150","澳洲星點珍珠龍/銀帶|1800|2800|銀白身軀粉紅星點鱗框|魚缸聲望+55","馬來西亞過背金龍魚|18000|22000|金質爬滿鱗片純金金條|魚缸聲望+200","印尼血豔辣椒紅龍魚|58000|45000|附晶片證書赤紅霸氣|聲望+350","帝王血紅龍王(神獸)|128000|99999|萬中選一頂點象徵巨獸|聲望+600"],
-  BUNDLE: [
-    "【都市療癒新手包】茶與螢光魚|680|650|梨山茶包＋富貴竹螢光魚瓶|回50體力",
-    "【水族爆缸快樂組】孔雀航母艦隊|320|600|航母×2＋純種公魚×3|繁殖翻倍",
-    "【短影音爆款組】免換水綠意雙享|1111|1111|黃金葛螢光魚瓶＋白網紋草球|被動加倍",
-    "【文青辦公桌】玻璃罩森林茶席|1980|2200|鐘型苔蘚缸＋蜜香紅茶＋白瓷杯|品味聲望+65",
-    "【直播間盲盒】倉庫尋寶福袋|1680|1800|隨機紫砂壺＋梨山茶＋隨機魚|驚喜聲望+60",
-    "【老粉專屬】私房工夫茶全配組|3980|4500|朱泥西施壺＋白瓷杯＋宋錦茶墊|養壺加倍",
-    "【造景師茶師聯名】雲霧山林品茗組|6600|7500|木質溪流苔蘚缸＋碧綠溪春茶|禪意共鳴",
-    "【養壺行家組】生茶熟茶雙壺雙韻|5880|6800|朱泥壺＋底槽清壺＋金蟾茶寵|雙壺齊養",
-    "【開幕喬遷】八方來財風水首選組|8888|10000|落地大發財樹＋血玉成對|賞金+30%",
-    "【海派大哥】茶席會客排場組|18800|22000|石瓢壺＋梨山茶一斤＋紫檀茶墊|大哥折服",
-    "【鎮宅之寶】龍行天下大亨全配組|88000|85000|紅龍魚＋比賽茶王＋供春壺|江湖聲望+800",
-    "【終極傳奇】總裁圓夢套餐|168888|150000|紅龍王＋血玉皇＋瀑布苔蘚缸|最高榮耀"
-  ]
-};
-
-const ITEMS = [];
-const PFX = { TEA:'T', WARE:'W', PLANT:'P', FISH:'F', BUNDLE:'B' };
-Object.keys(RAW_DB).forEach(cat => {
-  RAW_DB[cat].forEach((row, i) => {
-    const [name, nt, coin, desc, buff] = row.split('|');
-    const id = PFX[cat] + String(i + 1).padStart(2, '0');
-    ITEMS.push({ id, cat, name, nt: +nt, coin: +coin, desc, buff });
-  });
-});
-
-const QUESTS = [
-  ["Ⅰ.魔術師","✨","短影音創作者・阿凱","想找「底附2條螢光魚的水生植物」或「$300梨山茶包」提神拍片！",["P01","P02","P03","P04","P05","P06","T01","T02","T03"],850,25],
-  ["Ⅲ.皇后","🌿","室內設計師・Mia","急需造景師「透明罩苔蘚觀景缸」或「汝窯/白瓷茶杯」！",["P07","P08","P09","P10","P11","P12","P13","W08","W10"],2200,45],
-  ["Ⅹ.命運之輪","🎡","熱炒店老闆・阿發哥","想買「$50 孔雀航母」與「發財樹」來旺分店！",["F12","F13","P14","P15","P16"],1600,35],
-  ["Ⅳ.皇帝","👑","營造大亨・海派龍哥","指名要「中國宜興紫砂壺」配「台中梨山高海拔好茶」！",["W13","W14","W15","W16","W17","W18","W19","W20","W21","W22","T14","T17","T18","T20"],6500,90],
-  ["Ⅶ.戰車","🔥","物流總裁・彪哥","風水師叫他去倉庫請一條通紅如玉的「鴻運血玉」！",["F17","F18","F19"],9500,120],
-  ["Ⅸ.隱者","🏮","古董藏家・沈老","考驗你對「宜興名家紫砂壺」與「20年梨山老茶」的鑑賞力！",["T19","T21","T22","W18","W19","W20","W21","W22"],14000,160],
-  ["Ⅺ.力量","🦁","寵女企業家・霸天哥","想養霸氣龍魚，又想買水族館 $5~$10 小魚給女兒！",["F21","F22","F23","F24","F01","F02","F03","F04","F05"],25000,220],
-  ["ⅩⅪ.世界","🌍","集團創辦人・陳老董","終極委託！想一次鑑藏「頂級紅龍魚」、「梨山比賽茶王」！",["F23","F24","T22","P13"],88000,500]
-];
-
-const QUIZZES = [
-  ["Q1：水生植物生態共生瓶底部特別附了幾條什麼魚？",["A. 附 2 條螢光魚","B. 10條鯊魚","C. 沒有附魚"],0],
-  ["Q2：店內從 $300 茶包到頂級茶葉，主要產自台灣哪個高山茶區？",["A. 台中梨山茶區","B. 沙漠茶","C. 平地茶"],0],
-  ["Q3：大哥最愛的茶壺是正宗中國哪裡產的紫砂壺？",["A. 中國江蘇宜興","B. 塑膠壺","C. 鐵壺"],0],
-  ["Q4：倉庫 $50 一條、超會生小魚的招牌種母叫什麼？",["A. 霸氣「孔雀航母」","B. 翻車魚","C. 鯨魚"],0]
-];
-
-let S = { coins:500, rep:10, inv:['T01','P01','F01'], cart:[], vip:false, fry:2, pat:10, zIdx:0 };
-try{ const sv = localStorage.getItem('TF_SAVE_V7'); if(sv) S = {...S, ...JSON.parse(sv)}; }catch(e){}
-
-function toast(m){ const t=document.getElementById('toast'); t.innerHTML=m; t.style.display='block'; clearTimeout(window._tt); window._tt=setTimeout(()=>t.style.display='none',3500); }
-function sync(){
-  document.getElementById('hud-coin').innerText = S.coins.toLocaleString();
-  document.getElementById('hud-rep').innerText = S.rep.toLocaleString();
-  document.getElementById('l-fry').innerText = S.fry;
-  document.getElementById('l-pat').innerText = S.pat + '%';
-  try{ localStorage.setItem('TF_SAVE_V7', JSON.stringify(S)); }catch(e){}
-}
-
-let sMode = 'coin', sCat = 'ALL';
-function openShop(m){ if(m) sMode=m; openModal('m-shop'); renderShop(); }
-function openModal(id){ document.getElementById(id).classList.add('open'); if(id==='m-tarot') renderTarot(); if(id==='m-live') renderQuiz(); }
-function closeM(id){ document.getElementById(id).classList.remove('open'); }
-function switchMode(m){ sMode=m; renderShop(); }
-function setCat(c, btn){ sCat=c; renderShop(); }
-function renderShop(){
-  const list = ITEMS.filter(p => sCat==='ALL'||p.cat===sCat);
-  document.getElementById('p-grid').innerHTML = list.map(p => `
-    <div class="card">
-      <div>
-        <div style="font-size:.7rem;color:#999">[${p.id}]</div>
-        <div style="font-weight:700;font-size:.86rem;color:#f5ece2;margin:3px 0">${p.name}</div>
-        <div style="font-size:.72rem;color:#bfb0a0;margin-bottom:6px">${p.desc}</div>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <b style="color:var(--gold)">${sMode==='coin'?'🪙 $'+p.coin.toLocaleString():'NT$ '+p.nt.toLocaleString()}</b>
-        <button style="padding:5px 12px;background:var(--grn);color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer" onclick="buyItem('${p.id}')">購入</button>
-      </div>
+    <!-- 彈窗：塔羅與任務 -->
+    <div id="taskModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-lg rounded-3xl p-6 shadow-2xl border border-white/10 text-center">
+            <h2 class="text-white text-lg font-bold mb-2">🔮 街角塔羅占卜與每日任務</h2>
+            <p class="text-gray-300 text-xs mb-6">抽取今日運勢卡，造訪沉穩大哥與造景師，完成任務即可賺取金幣！</p>
+            <div class="glass-card p-6 rounded-2xl mb-6">
+                <div id="tarotResult" class="text-amber-400 font-bold text-base mb-2">點擊下方按鈕抽取今日品牌指引</div>
+                <p id="tarotDesc" class="text-gray-400 text-xs">了解梨山茶區風土與生態水族保養秘訣。</p>
+            </div>
+            <div class="flex gap-3 justify-center">
+                <button onclick="drawTarot()" class="bg-gradient-to-r from-amber-600 to-emerald-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg hover:opacity-90 transition">抽塔羅領 1,000 G</button>
+                <button onclick="closeModal('taskModal')" class="glass-card text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-white/10 transition">關閉視窗</button>
+            </div>
+        </div>
     </div>
-  `).join('');
-}
-function buyItem(id){
-  const p = ITEMS.find(x=>x.id===id);
-  if(S.coins < p.coin) return toast('❌ 金幣不足！');
-  S.coins -= p.coin; S.inv.push(id); S.rep += 5; sync();
-  toast(`🎉 成功購入【${p.name}】！`);
-}
 
-function renderTarot(){
-  document.getElementById('t-grid').innerHTML = QUESTS.map((q,i)=>`
-    <div class="card" style="cursor:pointer;text-align:center" onclick="completeQuest(${i})">
-      <div style="font-size:2rem">${q[1]}</div>
-      <b style="color:var(--gold);margin:4px 0">${q[0]}</b>
-      <div style="font-size:.78rem;color:#e2d1f0;margin-bottom:4px;font-weight:600">👤 ${q[2]}</div>
-      <div style="font-size:.72rem;color:#aaa;margin-bottom:8px">${q[3]}</div>
-      <b style="font-size:.74rem;color:#8ce6a5">賞金 +$${q[5].toLocaleString()}</b>
+    <!-- 彈窗：品牌短影音 -->
+    <div id="videoModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-md hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-xl rounded-3xl p-6 shadow-2xl border border-white/10 text-center">
+            <h2 class="text-white text-lg font-bold mb-2">🎥 品牌直擊與短影音牆</h2>
+            <p class="text-gray-300 text-xs mb-4">探索梨山茶園採茶實況與水族倉庫生態造景短片</p>
+            <div class="glass-card h-64 rounded-2xl mb-4 flex items-center justify-center relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-tr from-amber-900/60 to-emerald-900/60 flex items-center justify-center">
+                    <div class="w-16 h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white text-2xl shadow-xl group-hover:scale-110 transition cursor-pointer">▶</div>
+                </div>
+                <span class="absolute bottom-3 left-4 text-white text-xs font-bold">🎬 梨山高山茶 20年陳年老茶開箱特輯</span>
+            </div>
+            <button onclick="closeModal('videoModal')" class="glass-card text-white px-6 py-2 rounded-xl text-xs font-bold hover:bg-white/10 transition">返回遊戲</button>
+        </div>
     </div>
-  `).join('');
-}
-function completeQuest(i){
-  const q = QUESTS[i];
-  if(!q[4].some(req => S.inv.includes(req))) return toast(`⚠️ 尚未擁有【${q[2]}】指定的商品！`);
-  S.coins += q[5]; S.rep += q[6]; sync(); closeM('m-tarot');
-  toast(`🎊 交付【${q[2]}】委託成功！獲得賞金 <b>+$${q[5].toLocaleString()}</b>！`);
-}
 
-function renderQuiz(){
-  const z = QUIZZES[S.zIdx % QUIZZES.length];
-  document.getElementById('lz-q').innerText = z[0];
-  document.getElementById('lz-opts').innerHTML = z[1].map((o,idx)=>`<button style="text-align:left;padding:10px;background:#222;color:#fff;border:1px solid #444;border-radius:8px;cursor:pointer;font-weight:600" onclick="ansQuiz(${idx})">${o}</button>`).join('');
-}
-function ansQuiz(idx){
-  if(idx===0){ S.coins+=350; S.zIdx++; sync(); closeM('m-live'); toast('🎉 答對領紅包 +$350！'); }
-  else toast('🤔 再想一下喔！');
-}
-function liveBonus(){ S.coins+=200; sync(); closeM('m-live'); toast('🧧 直播福袋 +$200！'); }
-function sellFry(){
-  if(!S.fry) return toast('沒有待售小魚！');
-  S.coins += S.fry * 85; S.fry = 0; sync(); toast('💰 小魚已變現！');
-}
-function brewTea(){ S.pat=Math.min(100,S.pat+12); sync(); toast('🍵 泡茶養壺成功！'); }
+    <!-- Three.js 3D 遊戲與渲染邏輯 -->
+    <script>
+        let scene, camera, renderer, player, controls;
+        let keys = { w: false, a: false, s: false, d: false };
+        let currentCoins = 12500;
 
-function downloadSelf(){
-  const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "index.html"; a.click(); toast("💾 已下載 index.html！");
-}
+        function init3D() {
+            const container = document.getElementById('webgl-container');
 
-// ============================================================================
-// 高級沉浸式引擎：實體建築模型、室內走入系統、雙軌順暢操控
-// ============================================================================
-let scene, cam, ren, player, keys={}, touchMove={x:0, y:0}, camAng=0, camDist=18, currentActionTarget = null;
-let interactiveObjects = [], isIndoor = false, outdoorPos = new THREE.Vector3(0,0,5);
+            // 1. 場景與相機
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x151210);
+            scene.fog = new THREE.FogExp2(0x151210, 0.015);
 
-function init3D(){
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x1a2421);
-  scene.fog = new THREE.FogExp2(0x1a2421, 0.015);
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 8, 14);
 
-  cam = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 300);
-  ren = new THREE.WebGLRenderer({antialias:true});
-  ren.setSize(innerWidth, innerHeight);
-  ren.shadowMap.enabled = true;
-  document.getElementById('canvas-box').appendChild(ren.domElement);
+            // 2. 渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            container.appendChild(renderer.domElement);
 
-  scene.add(new THREE.AmbientLight(0xfff5e6, 0.8));
-  const sun = new THREE.DirectionalLight(0xfffaee, 1.2); sun.position.set(20,35,20); sun.castShadow=true; scene.add(sun);
+            // 3. 控制器 (OrbitControls 輔助滑鼠旋轉視角)
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2 - 0.05; // 限制視角不穿透地面
 
-  // 1. 戶外草地與柏油路
-  const grass = new THREE.Mesh(new THREE.PlaneGeometry(300,300), new THREE.MeshStandardMaterial({color:0x2e5a36, roughness:0.8}));
-  grass.rotation.x = -Math.PI/2; grass.receiveShadow=true; scene.add(grass);
-  const road = new THREE.Mesh(new THREE.PlaneGeometry(12,300), new THREE.MeshStandardMaterial({color:0x2b2d2f, roughness:0.5}));
-  road.rotation.x = -Math.PI/2; road.position.y = 0.02; scene.add(road);
+            // 4. 高級燈光 (PBR 光影環境)
+            const ambientLight = new THREE.AmbientLight(0xfff5e6, 0.7);
+            scene.add(ambientLight);
 
-  // 2. 主角角色
-  player = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.38,0.48,1.3,16), new THREE.MeshStandardMaterial({color:0x3b6e4c})); body.position.y=0.65;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.35,16,16), new THREE.MeshStandardMaterial({color:0xfde8d0})); head.position.y=1.5;
-  player.add(body, head); scene.add(player);
+            const dirLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+            dirLight.position.set(15, 25, 15);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            scene.add(dirLight);
 
-  // 3. 實體探索建築 (走到大門口可真正「走進室內」)
-  createBuilding(-12, -18, 6, 5, 6, 0x6a359c, "🔮 街角塔羅占卜攤", ()=>openModal('m-tarot'), false);
-  createBuilding(12, -28, 8, 6, 8, 0x8a5a36, "🍵 淺木質生態旗艦店 (內部展間)", ()=>enterIndoor('store'), true);
-  createBuilding(-12, -50, 7, 5, 7, 0x1d3557, "🐟 後巷養魚倉庫 (內部蓄養槽)", ()=>enterIndoor('warehouse'), true);
-  createBuilding(14, -70, 7, 6, 7, 0x2d6a4f, "🏡 北歐風木質小窩", ()=>openModal('m-loft'), false);
-  createBuilding(0, -38, 6, 5, 6, 0xb71c1c, "🔴 官方直播間", ()=>openModal('m-live'), false);
+            // 5. 建立高質感木質地板
+            const floorGeo = new THREE.PlaneGeometry(80, 80);
+            const floorMat = new THREE.MeshStandardMaterial({ 
+                color: 0x3d2817, 
+                roughness: 0.4, 
+                metalness: 0.1 
+            });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
 
-  initJoystick();
+            // 6. 建立玩家角色 (第三人稱代表模型：精緻木質機器人偶)
+            const playerGroup = new THREE.Group();
+            
+            // 身體
+            const bodyGeo = new THREE.CylinderGeometry(0.6, 0.8, 2.2, 16);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3, metalness: 0.4 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 1.1;
+            body.castShadow = true;
+            playerGroup.add(body);
 
-  window.onresize = () => { cam.aspect=innerWidth/innerHeight; cam.updateProjectionMatrix(); ren.setSize(innerWidth,innerHeight); };
-  window.onkeydown = e => keys[e.key.toLowerCase()] = true;
-  window.onkeyup = e => keys[e.key.toLowerCase()] = false;
+            // 頭部
+            const headGeo = new THREE.SphereGeometry(0.5, 16, 16);
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xfde68a, roughness: 0.2 });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 2.4;
+            head.castShadow = true;
+            playerGroup.add(head);
 
-  // 雙軌順暢控制：右半邊滑動隨時調整視角，移動同時進行
-  let isDrag=false, lastX=0, lastY=0;
-  ren.domElement.onmousedown = e => { if(e.clientX > innerWidth/3){ isDrag=true; lastX=e.clientX; } };
-  window.onmouseup = () => isDrag=false;
-  window.onmousemove = e => {
-    if(isDrag){
-      camAng -= (e.clientX - lastX) * 0.005; lastX = e.clientX;
-    }
-  };
-  window.ontouchstart = e => { if(e.touches[0].clientX > innerWidth/3){ isDrag=true; lastX=e.touches[0].clientX; } };
-  window.ontouchend = () => isDrag=false;
-  window.ontouchmove = e => {
-    if(isDrag){
-      camAng -= (e.touches[0].clientX - lastX) * 0.005; lastX = e.touches[0].clientX;
-    }
-  };
+            scene.add(playerGroup);
+            player = playerGroup;
 
-  let clock = new THREE.Clock();
-  (function loop(){
-    requestAnimationFrame(loop);
-    const dt = clock.getDelta();
+            // 7. 建立場景展示物件 (大型生態大魚缸、木質展架、茶具與造景植物模型群)
+            createEnvironmentProps();
 
-    let mx = touchMove.x + (keys.d||keys.arrowright?1:0) - (keys.a||keys.arrowleft?1:0);
-    let mz = touchMove.y + (keys.s||keys.arrowdown?1:0) - (keys.w||keys.arrowup?1:0);
-    if(mx!==0 || mz!==0){
-      const angle = camAng + Math.atan2(mx, mz);
-      player.position.x += Math.sin(angle) * 7.5 * dt;
-      player.position.z += Math.cos(angle) * 7.5 * dt;
-      if(!isIndoor){
-        player.position.x = Math.max(-25, Math.min(25, player.position.x));
-        player.position.z = Math.max(-100, Math.min(10, player.position.z));
-      } else {
-        player.position.x = Math.max(-8, Math.min(8, player.position.x));
-        player.position.z = Math.max(-8, Math.min(8, player.position.z));
-      }
-      player.rotation.y = angle;
-    }
+            // 8. 監聽事件
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keydown', (e) => handleKey(e, true));
+            window.addEventListener('keyup', (e) => handleKey(e, false));
 
-    let nearest = null, minDist = 6.5;
-    interactiveObjects.forEach(obj => {
-      const dist = player.position.distanceTo(obj.mesh.position);
-      if(dist < minDist){ minDist = dist; nearest = obj; }
-    });
+            animate();
+        }
 
-    const btn = document.getElementById('action-btn');
-    const hint = document.getElementById('world-hint');
-    if(nearest){
-      currentActionTarget = nearest.action;
-      btn.style.display = 'flex';
-      btn.innerText = nearest.name.split(' ')[0];
-      hint.innerText = `✨ 靠近【${nearest.name}】！點擊右下角按鈕互動！`;
-    } else {
-      currentActionTarget = null;
-      btn.style.display = 'none';
-      hint.innerText = isIndoor ? `🏠 內部展間探索中！點擊右下角返回戶外街道` : `🕹️ 左下角搖桿移動，右側滑動旋轉視角！走到大門走進室內！`;
-    }
+        // 建立精緻的展示道具與陳列櫃
+        function createEnvironmentProps() {
+            // 大型生態大魚缸模型架構
+            const tankGeo = new THREE.BoxGeometry(6, 3.5, 2);
+            const tankMat = new THREE.MeshPhysicalMaterial({ 
+                color: 0x10b981, 
+                transmission: 0.85, 
+                opacity: 1, 
+                transparent: true, 
+                roughness: 0.1,
+                ior: 1.5 
+            });
+            const tank = new THREE.Mesh(tankGeo, tankMat);
+            tank.position.set(0, 1.75, -8);
+            tank.castShadow = true;
+            scene.add(tank);
 
-    cam.position.lerp(new THREE.Vector3(player.position.x + Math.sin(camAng)*camDist, isIndoor ? 7 : 12, player.position.z + Math.cos(camAng)*camDist), 0.1);
-    cam.lookAt(player.position.x, player.position.y + 1, player.position.z);
+            // 魚缸內裝飾與展示櫃
+            const shelfGeo = new THREE.BoxGeometry(12, 0.4, 3);
+            const shelfMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.6 });
+            
+            const shelf1 = new THREE.Mesh(shelfGeo, shelfMat);
+            shelf1.position.set(-8, 1.5, -5);
+            shelf1.castShadow = true;
+            scene.add(shelf1);
 
-    ren.render(scene, cam);
-  })();
-}
+            // 陳列茶具與植物模型組件
+            for(let i = 0; i < 4; i++) {
+                const itemGeo = i % 2 === 0 ? new THREE.CylinderGeometry(0.4, 0.5, 0.8, 16) : new THREE.SphereGeometry(0.5, 16, 16);
+                const itemMat = new THREE.MeshStandardMaterial({ 
+                    color: i % 2 === 0 ? 0xb45309 : 0x047857, 
+                    roughness: 0.2, 
+                    metalness: 0.5 
+                });
+                const item = new THREE.Mesh(itemGeo, itemMat);
+                item.position.set(-11 + i * 2, 2.1, -5);
+                item.castShadow = true;
+                scene.add(item);
+            }
+        }
 
-function createBuilding(x, z, w, h, d, col, name, actionFn, canEnter){
-  const group = new THREE.Group();
-  const walls = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshStandardMaterial({color:col, roughness:0.3}));
-  walls.position.y = h/2; walls.castShadow = true; group.add(walls);
-  const roof = new THREE.Mesh(new THREE.ConeGeometry(w*0.75, 2.2, 4), new THREE.MeshStandardMaterial({color:0x2c221b, roughness:0.4}));
-  roof.position.y = h + 1.1; roof.rotation.y = Math.PI/4; group.add(roof);
-  group.position.set(x, 0, z);
-  scene.add(group);
-  interactiveObjects.push({ mesh: walls, name, action: actionFn });
-}
+        // 鍵盤狀態控制
+        function handleKey(e, isDown) {
+            switch(e.key.toLowerCase()) {
+                case 'w': case 'arrowup': keys.w = isDown; break;
+                case 'a': case 'arrowleft': keys.a = isDown; break;
+                case 's': case 'arrowdown': keys.s = isDown; break;
+                case 'd': case 'arrowright': keys.d = isDown; break;
+            }
+        }
 
-function enterIndoor(type){
-  isIndoor = true;
-  outdoorPos.copy(player.position);
-  player.position.set(0, 0, 0);
-  scene.background = new THREE.Color(0x2c221b);
-  toast(`🏠 已成功走入【${type==='store'?'淺木質生態旗艦店・內部展間':'後巷養魚倉庫・內部蓄養槽'}】！`);
-  // 新增返回戶外按鈕
-  interactiveObjects.push({ mesh: player, name: '🔙 走出戶外街道', action: exitIndoor });
-}
+        // 遊戲主迴圈
+        function animate() {
+            requestAnimationFrame(animate);
 
-function exitIndoor(){
-  isIndoor = false;
-  player.position.copy(outdoorPos);
-  scene.background = new THREE.Color(0x1a2421);
-  toast('🏙️ 已返回戶外綠意街道！');
-}
+            // 玩家移動邏輯
+            const speed = 0.12;
+            if (keys.w) player.position.z -= speed;
+            if (keys.s) player.position.z += speed;
+            if (keys.a) player.position.x -= speed;
+            if (keys.d) player.position.x += speed;
 
-function triggerCurrentAction(){
-  if(currentActionTarget) currentActionTarget();
-}
+            // 相機平滑跟隨玩家 (第三人稱視角)
+            camera.position.x = player.position.x;
+            camera.position.z = player.position.z + 12;
+            controls.target.copy(player.position);
+            controls.target.y += 1.5;
 
-function initJoystick(){
-  const zone = document.getElementById('joystick-zone');
-  const knob = document.getElementById('joystick-knob');
-  let active = false, center = {x:0, y:0};
+            controls.update();
+            renderer.render(scene, camera);
+        }
 
-  zone.onpointerdown = e => {
-    active = true;
-    const rect = zone.getBoundingClientRect();
-    center = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
-    zone.setPointerCapture(e.pointerId);
-  };
-  zone.onpointermove = e => {
-    if(!active) return;
-    let dx = e.clientX - center.x, dy = e.clientY - center.y;
-    const dist = Math.hypot(dx, dy), maxR = 38;
-    if(dist > maxR){ dx *= maxR/dist; dy *= maxR/dist; }
-    knob.style.transform = `translate(${dx}px, ${dy}px)`;
-    touchMove.x = dx / maxR; touchMove.y = dy / maxR;
-  };
-  zone.onpointerup = zone.onpointercancel = e => {
-    active = false; knob.style.transform = `translate(0px, 0px)`;
-    touchMove.x = 0; touchMove.y = 0;
-  };
-}
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
 
-window.onload = () => { sync(); init3D(); };
-</script>
+        // UI 互動功能函數
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+        }
+
+        function buyItem(itemName) {
+            currentCoins += 500; // 模擬獲得回饋
+            document.getElementById('coin-count').innerText = currentCoins.toLocaleString();
+            showToast(`🎉 成功解鎖「${itemName}」！獲得品牌積分回饋！`);
+            closeModal('shopModal');
+        }
+
+        function drawTarot() {
+            const fortunes = [
+                "【大吉】今日梨山茶氣場旺盛，適合前往造景倉庫領取稀有螢光魚！",
+                "【中吉】宜興紫砂與高山茶相遇，今日與客戶對話將獲得專屬 9 折優惠券！",
+                "【福運】造景生態大魚缸能量滿點，點擊商城解鎖頂級紅龍魚正是時候！"
+            ];
+            const randomFortune = fortunes[Math.floor(Math.random() * fortunes.length)];
+            document.getElementById('tarotResult').innerText = randomFortune;
+            currentCoins += 1000;
+            document.getElementById('coin-count').innerText = currentCoins.toLocaleString();
+            showToast("🔮 塔羅占卜完成！獎勵 1,000 G 已存入帳戶！");
+        }
+
+        function switchZone(zone) {
+            ['street', 'store', 'warehouse'].forEach(z => {
+                const btn = document.getElementById(`btn-${z}`);
+                if(z === zone) {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 text-white shadow";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold glass-card text-gray-300 hover:text-white shadow";
+                }
+            });
+            if(zone === 'street') {
+                showToast("🌳 已切換至：陽光草地街道 & 塔羅占卜區");
+                player.position.set(0, 0, 0);
+            } else if(zone === 'store') {
+                showToast("🏮 已切換至：淺木質旗艦店與大魚缸展示區");
+                player.position.set(0, 0, -5);
+            } else if(zone === 'warehouse') {
+                showToast("🐟 已切換至：後巷養魚倉庫與水族育成區");
+                player.position.set(5, 0, -8);
+            }
+        }
+
+        // 啟動 3D 引擎
+        window.onload = init3D;
+    </script>
 </body>
 </html>
