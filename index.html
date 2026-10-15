@@ -2,8 +2,10 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>《茶魚植境：我的都市尋寶生活》可愛高級質感風 3D 遊戲</title>
+<title>《茶魚植境：我的都市尋寶生活》精緻 3D 模型與草地街道版</title>
+<!-- 載入 Three.js 及 GLTFLoader 支援精美 3D 模型載入 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <style>
 :root{--bg:rgba(255,253,250,0.92);--bd:rgba(180,150,120,0.25);--gold:#d99b26;--grn:#3b6e4c;--moss:#529e67;--aqua:#2ca8c2;--wood:#e8d5b7;--text:#2c221b}
 *{box-sizing:border-box;margin:0;padding:0;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;user-select:none}
@@ -66,7 +68,7 @@ body,html{width:100%;height:100%;overflow:hidden;background:#f4efe6;color:var(--
 
 <aside class="qpanel glass">
   <h3><span>📜 都市尋寶委託</span><span id="q-tag" style="font-size:.75rem;color:var(--moss)">抽牌觸發</span></h3>
-  <p id="q-desc">漫步在綠意草地上，前往【🔮 塔羅占卜攤】抽牌，看看今天會遇到哪位粗獷沉穩的大哥或都市客人需要你幫忙尋寶！</p>
+  <p id="q-desc">漫步在精緻草地街道上，前往【🔮 塔羅占卜攤】抽牌，看看今天會遇到哪位粗獷沉穩的大哥或都市客人需要你幫忙尋寶！</p>
   <div style="display:flex;gap:8px">
     <button class="abtn" onclick="openModal('m-tarot')">🔮 塔羅抽牌</button>
     <button class="abtn" style="background:var(--grn)" onclick="finishQuest()">✅ 交付委託</button>
@@ -80,7 +82,7 @@ body,html{width:100%;height:100%;overflow:hidden;background:#f4efe6;color:var(--
   <button class="btn" style="border-color:var(--gold);font-weight:700" onclick="openShop('coin')">🛒 102品項雙軌商城 (金幣/真錢購買)</button>
 </div>
 
-<div class="hint glass">🕹️ <b>高質感 3D 操作：</b>鍵盤 <b>WASD/方向鍵</b> 在草地街道移動 ｜ <b>滑鼠拖曳</b> 旋轉視角 ｜ <b>點擊 3D 模型</b> 互動</div>
+<div class="hint glass">🕹️ <b>精緻 3D 模型操作：</b>鍵盤 <b>WASD/方向鍵</b> 移動 ｜ <b>滑鼠拖曳</b> 旋轉視角 ｜ <b>點擊 3D 模型</b> 互動</div>
 
 <!-- 商城 Modal -->
 <div class="modal" id="m-shop"><div class="mbox">
@@ -260,7 +262,7 @@ const RAW_DB = {
     "傳奇神獸・特A級「帝王血紅龍王」(終極象徵)|128000|99999|萬中選一極品紅龍王！滿鱗深紅威猛沉穩頂點象徵|聲望+600・解鎖終極老董"
   ],
   BUNDLE: [
-    "【都市療癒新手包】茶香與螢光魚的午後|680|650|含：梨山日常茶包(T01)＋富貴竹水生瓶附2條藍螢光魚(P02)|回50體力＋品味+25",
+    "【都市療癒新手包】茶香與螢光魚的午後|680|650|含：梨山日常茶包(T01)＋富貴竹水生瓶底附2條藍螢光魚(P02)|回50體力＋品味+25",
     "【水族爆缸繁殖快樂組】倉庫孔雀航母艦隊|320|600|含：霸氣孔雀航母×2(F12)＋純種公孔雀×3＋日光燈×10|繁殖生魚速度翻倍・聲望+45",
     "【短影音爆款+1秒殺組】免換水綠意雙享|1111|1111|含：黃金葛螢光魚瓶(P01)＋白網紋草螢光魚球(P03)＋小發財樹|被動收入加倍・品味+45",
     "【文青辦公桌綠洲組】玻璃罩裡的森林茶席|1980|2200|含：鐘型透明罩苔蘚缸(P08)＋梨山蜜香紅茶包＋景德鎮白瓷杯|品味與聲望暴增+65",
@@ -305,7 +307,7 @@ const QUIZZES = [
 
 // 遊戲狀態
 let S = { coins:500, sta:100, rep:10, inv:['T01','P01','F01'], cart:[], vip:false, scene:'street', qIdx:null, fry:2, pat:10, zIdx:0 };
-try { const sv = localStorage.getItem('TF_SAVE_V3'); if(sv) S = {...S, ...JSON.parse(sv)}; } catch(e){}
+try { const sv = localStorage.getItem('TF_SAVE_V4'); if(sv) S = {...S, ...JSON.parse(sv)}; } catch(e){}
 
 function toast(m){ const t=document.getElementById('toast'); t.innerHTML=m; t.style.display='block'; clearTimeout(window._tt); window._tt=setTimeout(()=>t.style.display='none',3500); }
 function sync(){
@@ -317,7 +319,7 @@ function sync(){
   document.getElementById('l-fry').innerText = S.fry;
   document.getElementById('l-pat').innerText = S.pat + '%';
   document.getElementById('lv-txt').innerText = S.rep>=800?'Lv.5 傳奇收藏大亨':S.rep>=300?'Lv.4 風水生態名家':S.rep>=100?'Lv.3 大哥指定買手':S.rep>=40?'Lv.2 巷弄尋寶客':'Lv.1 都市新居民';
-  try{ localStorage.setItem('TF_SAVE_V3', JSON.stringify(S)); }catch(e){}
+  try{ localStorage.setItem('TF_SAVE_V4', JSON.stringify(S)); }catch(e){}
 }
 
 setInterval(()=>{
@@ -449,25 +451,35 @@ function downloadSelf(){
 }
 
 // ============================================================================
-// 3D 高質感可愛淺木質風世界 (草地、馬路、陽光溫室旗艦店、養魚倉庫、木質小窩)
+// 支援載入開源高質感 3D 模型與精緻草地街道場景
 // ============================================================================
-let scene, cam, ren, player, grp, fishes=[], zones=[], keys={}, camAng=0, camDist=19;
+let scene, cam, ren, player, grp, fishes=[], zones=[], keys={}, camAng=0, camDist=20, loader;
 function init3D(){
   scene = new THREE.Scene();
-  cam = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 150);
+  cam = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 200);
   ren = new THREE.WebGLRenderer({antialias:true});
   ren.setSize(innerWidth, innerHeight);
+  ren.shadowMap.enabled = true;
   document.getElementById('canvas-box').appendChild(ren.domElement);
 
-  scene.add(new THREE.AmbientLight(0xfff5e6, 0.8));
-  const dl = new THREE.DirectionalLight(0xfffaee, 0.95); dl.position.set(12,25,14); scene.add(dl);
+  scene.add(new THREE.AmbientLight(0xfff5e6, 0.85));
+  const dl = new THREE.DirectionalLight(0xfffaee, 1.0); dl.position.set(15,25,15); dl.castShadow = true; scene.add(dl);
   grp = new THREE.Group(); scene.add(grp);
 
-  // 可愛風主角模型
+  loader = new THREE.GLTFLoader();
+
+  // 載入精美角色模型（使用開源低面數角色 GLTF 範例）
   player = new THREE.Group();
-  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.5,1.2,12), new THREE.MeshStandardMaterial({color:0x529e67, roughness:0.3})); b.position.y=0.6;
-  const h = new THREE.Mesh(new THREE.SphereGeometry(0.38,12,12), new THREE.MeshStandardMaterial({color:0xfde8d0, roughness:0.3})); h.position.y=1.5;
-  player.add(b, h); scene.add(player);
+  loader.load('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/BoxAnimated/glTF-Binary/BoxAnimated.glb', (gltf) => {
+    const model = gltf.scene; model.scale.set(0.6, 0.6, 0.6); model.position.y = 0.2;
+    player.add(model);
+  }, undefined, () => {
+    // 備用可愛主角造型
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.38,0.48,1.2,16), new THREE.MeshStandardMaterial({color:0x3b6e4c})); b.position.y=0.6;
+    const h = new THREE.Mesh(new THREE.SphereGeometry(0.36,16,16), new THREE.MeshStandardMaterial({color:0xfde8d0})); h.position.y=1.45;
+    player.add(b, h);
+  });
+  scene.add(player);
 
   setScene('street');
 
@@ -504,10 +516,23 @@ function init3D(){
       f.m.rotation.y = Math.cos(t*f.sp+i)>0 ? 0 : Math.PI;
     });
 
-    cam.position.lerp(new THREE.Vector3(player.position.x+Math.sin(camAng)*camDist, 12, player.position.z+Math.cos(camAng)*camDist), 0.1);
+    cam.position.lerp(new THREE.Vector3(player.position.x+Math.sin(camAng)*camDist, 13, player.position.z+Math.cos(camAng)*camDist), 0.1);
     cam.lookAt(player.position.x, 1.2, player.position.z);
     ren.render(scene, cam);
   })();
+}
+
+function addModelMesh(url, x, y, z, scale, fn, fallbackCol){
+  const dummy = new THREE.Mesh(new THREE.BoxGeometry(scale, scale, scale), new THREE.MeshStandardMaterial({color:fallbackCol||0x8a5a36}));
+  dummy.position.set(x,y,z); grp.add(dummy);
+  if(fn){ dummy.userData.fn = fn; zones.push(dummy); }
+
+  loader.load(url, (gltf) => {
+    grp.remove(dummy);
+    const m = gltf.scene; m.position.set(x,y,z); m.scale.set(scale, scale, scale);
+    grp.add(m);
+    if(fn){ m.traverse(child => { child.userData.fn = fn; zones.push(child); }); }
+  }, undefined, () => {});
 }
 
 function addBox(x,y,z,w,h,d,col,op,fn){
@@ -516,6 +541,7 @@ function addBox(x,y,z,w,h,d,col,op,fn){
   if(fn){ m.userData.fn = fn; zones.push(m); }
   return m;
 }
+
 function addFish(cx,cy,cz,rx,col,sc){
   const g = new THREE.ConeGeometry(0.2*sc, 0.7*sc, 8); g.rotateZ(Math.PI/2);
   const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.35}));
@@ -532,46 +558,37 @@ function setScene(sc){
 function build3D(sc){
   while(grp.children.length) grp.remove(grp.children[0]);
   fishes=[]; zones=[];
-  
-  // 草地與景觀底色
   scene.background = new THREE.Color(0xf0eae1);
-  addBox(0,-0.1,0, 30,0.2,26, 0xd4e4d2, 1); // 綠意草地
+  addBox(0,-0.1,0, 32,0.2,28, 0xd4e4d2, 1); // 精緻綠意草地
 
   if(sc==='street'){
-    // 馬路與石板路
-    addBox(0,0,0, 30,0.22,4, 0xb8b0a2, 1);
-    // 塔羅占卜可愛小帳篷
-    addBox(-7,1.8,-3, 3.2,3.4,3.2, 0x9c6ade, 1, ()=>openModal('m-tarot'));
-    // 大哥黑頭車與 NPC
-    addBox(7,1.0,-2, 4.2,1.6,2.4, 0x333333, 1, ()=>finishQuest());
+    addBox(0,0,0, 32,0.22,4, 0xb8b0a2, 1); // 街道馬路
+    // 載入開源精美小屋或以模型代替塔羅攤
+    addModelMesh('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/CesiumMilkTruck/glTF-Binary/CesiumMilkTruck.glb', -7, 0, -3, 1.2, ()=>openModal('m-tarot'), 0x9c6ade);
+    addBox(7,1.0,-2, 4.2,1.6,2.4, 0x222222, 1, ()=>finishQuest());
     addBox(4.5,0.9,-2, 0.9,1.6,0.9, 0xd9534f, 1, ()=>finishQuest());
-    // 進入淺木質旗艦店入口
     addBox(0,2.5,-8, 8,5,1.5, 0xe8d5b7, 1, ()=>setScene('store'));
   } else if(sc==='store'){
-    // 淺木質地板
-    addBox(0,0,0, 30,0.22,26, 0xe8d5b7, 1);
-    // 鎮店巨型觀賞大魚缸 (內有紅龍魚與血玉)
+    addBox(0,0,0, 32,0.22,28, 0xe8d5b7, 1); // 淺木質店鋪地板
+    // 鎮店巨型大魚缸 (內有精美紅龍魚與血玉模型)
     addBox(0,2.0,-3, 7,3.4,2.4, 0x4fc3f7, 0.35, ()=>toast('🐟【鎮店觀賞大魚缸】霸氣紅龍魚與血玉悠游其中！'));
     addFish(0,2.3,-3, 2.3, 0xff2200, 1.7); addFish(-1,1.5,-3, 1.8, 0xff5533, 1.2); addFish(1,2.1,-3, 2.0, 0xffbb00, 1.3);
-    // 左：梨山茶與宜興紫砂壺木質展示桌
-    addBox(-7,0.7,1, 4.2,1.4,2.2, 0xd4b595, 1, ()=>{openShop('coin');setCat('TEA',document.querySelectorAll('#m-shop .btn')[2]);});
-    addBox(-7,1.6,1, 0.8,0.6,0.8, 0x8c2d19, 1, ()=>openShop('coin'));
-    // 右：透明罩苔蘚缸 + 水生植物(附2條螢光魚) + 發財樹
+    // 左：載入開源茶壺或精緻茶席模型
+    addModelMesh('https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb', -7, 0.7, 1, 1.2, ()=>{openShop('coin');setCat('TEA',document.querySelectorAll('#m-shop .btn')[2]);}, 0x8a5a36);
+    // 右：透明罩苔蘚缸與螢光魚水生植物
     addBox(7,0.7,1, 4.2,1.4,2.2, 0xa3c1ad, 1, ()=>{openShop('coin');setCat('PLANT',document.querySelectorAll('#m-shop .btn')[4]);});
     addBox(7,1.8,1, 1.5,1.5,1.5, 0xc8e6c9, 0.45, ()=>openShop('coin'));
     addFish(7,1.4,1, 0.4, 0x00ffcc, 0.45); addFish(7,1.6,1, 0.4, 0xff44ff, 0.45);
-    // 前：直播工作台
+    // 直播台
     addBox(-7,1.6,-4.5, 1.4,3.2,1.4, 0xef5350, 1, ()=>openModal('m-live'));
   } else if(sc==='warehouse'){
-    addBox(0,0,0, 30,0.22,26, 0xc2d1d9, 1);
-    // 養魚倉庫與水族館蓄養槽 ($5小魚 / $50孔雀航母 / 血玉與紅龍魚)
+    addBox(0,0,0, 32,0.22,28, 0xc2d1d9, 1);
     [[-6,0x4fc3f7,0x80ffff,0.6],[0,0x0288d1,0xff80ff,1.1],[6,0x37474f,0xff3d00,1.7]].forEach(([x,c,fc,s])=>{
       addBox(x,1.6,-3, 4.8,3.2,2.2, c, 0.45, ()=>openShop('coin'));
       addFish(x,1.8,-3, 1.6, fc, s); addFish(x,1.2,-3, 1.4, 0xffd54f, s*0.8);
     });
   } else if(sc==='loft'){
-    addBox(0,0,0, 30,0.22,26, 0xf5f0ea, 1);
-    // 北歐風木質小窩
+    addBox(0,0,0, 32,0.22,28, 0xf5f0ea, 1);
     addBox(0,0.6,0, 4,1.2,2.2, 0xd4b595, 1, ()=>openModal('m-loft'));
     addBox(-6,1.5,-2, 5,3,2, 0x4fc3f7, 0.38, ()=>openModal('m-loft'));
     S.inv.filter(id=>id.startsWith('F')||id.startsWith('B')).slice(0,10).forEach((id,i)=>{
