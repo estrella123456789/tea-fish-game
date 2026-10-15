@@ -2,37 +2,37 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>《茶魚植境：我的都市尋寶生活》3D 互動品牌遊戲</title>
+<title>《茶魚植境：我的都市尋寶生活》可愛高級質感風 3D 遊戲</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-:root{--bg:rgba(24,18,14,0.88);--bd:rgba(215,191,166,0.3);--gold:#e6b347;--grn:#3b6e4c;--moss:#66b87d;--aqua:#2ca8c2}
+:root{--bg:rgba(255,253,250,0.92);--bd:rgba(180,150,120,0.25);--gold:#d99b26;--grn:#3b6e4c;--moss:#529e67;--aqua:#2ca8c2;--wood:#e8d5b7;--text:#2c221b}
 *{box-sizing:border-box;margin:0;padding:0;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;user-select:none}
-body,html{width:100%;height:100%;overflow:hidden;background:#120e0b;color:#f5efe6}
+body,html{width:100%;height:100%;overflow:hidden;background:#f4efe6;color:var(--text)}
 #canvas-box{position:absolute;inset:0;z-index:1}
-.glass{background:var(--bg);backdrop-filter:blur(10px);border:1px solid var(--bd);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,0.5)}
-.hud{position:absolute;top:10px;left:12px;right:12px;z-index:10;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding:10px 16px;gap:8px}
+.glass{background:var(--bg);backdrop-filter:blur(12px);border:1px solid var(--bd);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,0.08)}
+.hud{position:absolute;top:12px;left:16px;right:16px;z-index:10;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding:10px 18px;gap:8px}
 .stats{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.pill{background:rgba(255,255,255,0.08);padding:5px 11px;border-radius:8px;font-size:.84rem;border:1px solid rgba(255,255,255,0.12)}
-.pill b{color:var(--gold)}
-.nav{position:absolute;top:72px;left:12px;z-index:10;display:flex;flex-wrap:wrap;gap:6px}
-.btn{background:var(--bg);color:#efe6dd;border:1px solid var(--bd);padding:7px 12px;border-radius:9px;cursor:pointer;font-size:.82rem;transition:.2s}
-.btn:hover,.btn.act{background:#5c3e2b;border-color:var(--gold);color:#fff;transform:translateY(-2px)}
-.qpanel{position:absolute;top:120px;left:12px;width:300px;z-index:10;padding:12px;border-left:4px solid var(--gold)}
-.qpanel h3{font-size:.9rem;color:var(--gold);margin-bottom:5px;display:flex;justify-content:space-between}
-.qpanel p{font-size:.78rem;line-height:1.45;color:#dfd3c3;margin-bottom:8px}
-.abtn{width:100%;padding:7px;border:none;border-radius:7px;background:linear-gradient(135deg,#d49b35,#9c6210);color:#fff;font-weight:700;font-size:.8rem;cursor:pointer}
-.dock{position:absolute;bottom:16px;right:16px;z-index:10;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
-.hint{position:absolute;bottom:14px;left:12px;z-index:10;padding:6px 12px;font-size:.76rem;color:#c7b8a6}
-.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.72);display:none;justify-content:center;align-items:center;padding:14px}
+.pill{background:rgba(232,213,183,0.35);padding:6px 12px;border-radius:10px;font-size:.85rem;border:1px solid rgba(180,150,120,0.3)}
+.pill b{color:#b37d14}
+.nav{position:absolute;top:76px;left:16px;z-index:10;display:flex;flex-wrap:wrap;gap:8px}
+.btn{background:var(--bg);color:#5c4033;border:1px solid var(--bd);padding:8px 14px;border-radius:10px;cursor:pointer;font-size:.84rem;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.04);transition:.2s}
+.btn:hover,.btn.act{background:#d9c3a3;border-color:var(--gold);color:#1a130f;transform:translateY(-2px)}
+.qpanel{position:absolute;top:130px;left:16px;width:310px;z-index:10;padding:14px;border-left:5px solid var(--gold)}
+.qpanel h3{font-size:.92rem;color:var(--gold);margin-bottom:6px;display:flex;justify-content:space-between}
+.qpanel p{font-size:.8rem;line-height:1.45;color:#4a3b32;margin-bottom:10px}
+.abtn{width:100%;padding:8px;border:none;border-radius:8px;background:linear-gradient(135deg,#e6b347,#b88214);color:#fff;font-weight:700;font-size:.82rem;cursor:pointer;box-shadow:0 4px 12px rgba(230,179,71,0.3)}
+.dock{position:absolute;bottom:20px;right:20px;z-index:10;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+.hint{position:absolute;bottom:18px;left:16px;z-index:10;padding:8px 14px;font-size:.78rem;color:#6b5748}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(44,34,27,0.55);backdrop-filter:blur(6px);display:none;justify-content:center;align-items:center;padding:16px}
 .modal.open{display:flex}
-.mbox{width:100%;max-width:960px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;background:#1c1612;border:1px solid var(--gold);border-radius:16px}
-.mhead{padding:14px 18px;background:#2a2019;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bd)}
-.mbody{padding:16px;overflow-y:auto;flex:1}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px;margin-top:10px}
-.card{background:#261d17;border:1px solid var(--bd);border-radius:10px;padding:11px;display:flex;flex-direction:column;justify-content:space-between;position:relative}
-.card:hover{border-color:var(--gold)}
-.badge{position:absolute;top:8px;right:8px;background:#234730;color:#8ce6a5;font-size:.68rem;padding:2px 6px;border-radius:8px}
-#toast{position:fixed;top:76px;right:16px;z-index:99;background:#203828;border:1px solid var(--moss);color:#fff;padding:10px 16px;border-radius:9px;font-size:.84rem;display:none;max-width:330px}
+.mbox{width:100%;max-width:980px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;background:#fffaf3;border:1px solid var(--gold);border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,0.18)}
+.mhead{padding:16px 20px;background:#f3e8dc;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bd)}
+.mbody{padding:20px;overflow-y:auto;flex:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px}
+.card{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:14px;display:flex;flex-direction:column;justify-content:space-between;position:relative;box-shadow:0 4px 12px rgba(0,0,0,0.03);transition:.15s}
+.card:hover{border-color:var(--gold);transform:translateY(-2px)}
+.badge{position:absolute;top:10px;right:10px;background:#e6f4ea;color:#137333;font-size:.7rem;padding:2px 8px;border-radius:10px;font-weight:700}
+#toast{position:fixed;top:82px;right:20px;z-index:99;background:#3b6e4c;color:#fff;padding:12px 18px;border-radius:10px;font-size:.88rem;box-shadow:0 8px 24px rgba(0,0,0,0.2);display:none;max-width:340px}
 </style>
 </head>
 <body>
@@ -40,11 +40,11 @@ body,html{width:100%;height:100%;overflow:hidden;background:#120e0b;color:#f5efe
 <div id="toast"></div>
 
 <header class="hud glass">
-  <div style="display:flex;align-items:center;gap:8px">
-    <span style="font-size:1.4rem">🍵🐟🌱</span>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span style="font-size:1.5rem">🍵🐟🌱</span>
     <div>
-      <b style="font-size:1.05rem;color:#ecd9c6">茶魚植境：都市尋寶生活</b>
-      <span id="lv-txt" style="background:var(--grn);font-size:.7rem;padding:2px 7px;border-radius:12px;margin-left:6px">Lv.1 都市新居民</span>
+      <b style="font-size:1.1rem;color:#3b2b20">茶魚植境：我的都市尋寶生活</b>
+      <span id="lv-txt" style="background:var(--moss);color:#fff;font-size:.72rem;padding:3px 8px;border-radius:12px;margin-left:6px">Lv.1 都市新居民</span>
     </div>
   </div>
   <div class="stats">
@@ -52,49 +52,49 @@ body,html{width:100%;height:100%;overflow:hidden;background:#120e0b;color:#f5efe
     <div class="pill">⚡ 體力 <b id="s-sta">100</b></div>
     <div class="pill">✨ 聲望 <b id="s-rep">10</b></div>
     <div class="pill">📖 圖鑑 <b id="s-col">3/102</b></div>
-    <button class="btn" style="border-color:var(--moss)" onclick="openShop('real')">🛒 真錢購物車 (<b id="s-cart">0</b>)</button>
-    <button class="btn" style="background:#2b4c66;border-color:#69c0ff" onclick="downloadSelf()">💾 下載此網頁檔</button>
+    <button class="btn" style="border-color:var(--moss)" onclick="openShop('real')">🛒 真實購物車 (<b id="s-cart">0</b>)</button>
+    <button class="btn" style="background:#e3f2fd;border-color:#90caf9;color:#0d47a1" onclick="downloadSelf()">💾 下載此網頁檔</button>
   </div>
 </header>
 
 <nav class="nav">
-  <button class="btn act" id="b-street" onclick="setScene('street')">🏙️ 城市街頭 & 塔羅攤</button>
-  <button class="btn" id="b-store" onclick="setScene('store')">🍵 木質旗艦店 (鎮店大魚缸)</button>
+  <button class="btn act" id="b-street" onclick="setScene('street')">🏙️ 陽光草地街道 & 塔羅攤</button>
+  <button class="btn" id="b-store" onclick="setScene('store')">🍵 淺木質旗艦店 (鎮店大魚缸)</button>
   <button class="btn" id="b-warehouse" onclick="setScene('warehouse')">🐟 後巷養魚倉庫 & 水族區</button>
-  <button class="btn" id="b-loft" onclick="setScene('loft')">🏡 我的木質頂樓小窩</button>
+  <button class="btn" id="b-loft" onclick="setScene('loft')">🏡 我的北歐風木質小窩</button>
 </nav>
 
 <aside class="qpanel glass">
-  <h3><span>📜 都市尋寶委託</span><span id="q-tag" style="font-size:.72rem;color:#8ce6a5">抽牌觸發</span></h3>
-  <p id="q-desc">前往街角【🔮 塔羅占卜攤】抽牌，看看今天會遇到哪位粗獷沉穩的大哥或都市客人需要你去店裡與養魚倉庫尋寶！</p>
-  <div style="display:flex;gap:6px">
+  <h3><span>📜 都市尋寶委託</span><span id="q-tag" style="font-size:.75rem;color:var(--moss)">抽牌觸發</span></h3>
+  <p id="q-desc">漫步在綠意草地上，前往【🔮 塔羅占卜攤】抽牌，看看今天會遇到哪位粗獷沉穩的大哥或都市客人需要你幫忙尋寶！</p>
+  <div style="display:flex;gap:8px">
     <button class="abtn" onclick="openModal('m-tarot')">🔮 塔羅抽牌</button>
     <button class="abtn" style="background:var(--grn)" onclick="finishQuest()">✅ 交付委託</button>
   </div>
 </aside>
 
 <div class="dock">
-  <button class="btn" style="background:#9e2222;border-color:#ff7875;font-weight:700" onclick="openModal('m-live')">🔴 參與店家直播 & 拍短影音 (+1搶紅包)</button>
+  <button class="btn" style="background:#fce8e6;border-color:#f56358;color:#c5221f;font-weight:700" onclick="openModal('m-live')">🔴 參與店家直播 & 拍短影音 (+1搶紅包)</button>
   <button class="btn" onclick="openModal('m-tarot')">🔮 街角塔羅占卜攤 (觸發8大NPC)</button>
   <button class="btn" onclick="openModal('m-loft')">🏡 小窩養成：孔雀航母繁殖 & 紫砂養壺</button>
   <button class="btn" style="border-color:var(--gold);font-weight:700" onclick="openShop('coin')">🛒 102品項雙軌商城 (金幣/真錢購買)</button>
 </div>
 
-<div class="hint glass">🕹️ <b>操作：</b>鍵盤 <b>WASD/方向鍵</b> 移動角色 ｜ <b>滑鼠拖曳</b> 旋轉3D視角 ｜ <b>點擊3D物件</b> 互動</div>
+<div class="hint glass">🕹️ <b>高質感 3D 操作：</b>鍵盤 <b>WASD/方向鍵</b> 在草地街道移動 ｜ <b>滑鼠拖曳</b> 旋轉視角 ｜ <b>點擊 3D 模型</b> 互動</div>
 
 <!-- 商城 Modal -->
 <div class="modal" id="m-shop"><div class="mbox">
   <div class="mhead"><h3 style="color:var(--gold)">🛒 茶魚植境・102 品項虛實雙軌旗艦商城</h3><button class="btn" onclick="closeM('m-shop')">✕</button></div>
   <div class="mbody">
-    <div style="display:flex;gap:8px;margin-bottom:10px">
+    <div style="display:flex;gap:10px;margin-bottom:12px">
       <button class="abtn" id="t-coin" onclick="switchMode('coin')">🪙 遊戲金幣購買 (佈置3D小窩 & 解NPC任務)</button>
-      <button class="abtn" id="t-real" style="background:#234730" onclick="switchMode('real')">💳 品牌真錢商城 (新台幣NT$購買・享遊戲VIP折扣)</button>
+      <button class="abtn" id="t-real" style="background:#137333" onclick="switchMode('real')">💳 品牌真錢商城 (新台幣NT$購買・享遊戲VIP折扣)</button>
     </div>
-    <div id="cart-bar" style="display:none;background:#193022;padding:10px;border-radius:8px;margin-bottom:10px;justify-content:space-between;align-items:center">
-      <span>💳 真實購物車：<b id="c-cnt">0</b> 件｜總計 <b>NT$ <span id="c-sum">0</span></b> <small id="c-vip" style="color:#ffd666"></small></span>
-      <div style="display:flex;gap:6px">
+    <div id="cart-bar" style="display:none;background:#e6f4ea;padding:12px;border-radius:10px;margin-bottom:12px;justify-content:space-between;align-items:center;border:1px solid #137333">
+      <span>💳 真實購物車：<b id="c-cnt">0</b> 件｜總計 <b>NT$ <span id="c-sum">0</span></b> <small id="c-vip" style="color:#b37d14;font-weight:700"></small></span>
+      <div style="display:flex;gap:8px">
         <button class="btn" onclick="useVip()">🎟️ 套用VIP 85折碼</button>
-        <button class="btn" style="background:var(--grn)" onclick="checkout()">✅ 模擬結帳下單</button>
+        <button class="btn" style="background:var(--grn);color:#fff" onclick="checkout()">✅ 模擬結帳下單</button>
       </div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
@@ -104,30 +104,30 @@ body,html{width:100%;height:100%;overflow:hidden;background:#120e0b;color:#f5efe
       <button class="btn" onclick="setCat('PLANT',this)">🌱 透明罩苔蘚缸/螢光魚水生瓶/發財樹(22)</button>
       <button class="btn" onclick="setCat('FISH',this)">🐟 養魚倉庫&水族館($5魚/孔雀航母/血玉/紅龍)(24)</button>
       <button class="btn" onclick="setCat('BUNDLE',this)">🎁 限定組合包(12)</button>
-      <input id="q-inp" placeholder="🔍 搜尋：梨山、紫砂、螢光魚、航母、紅龍..." oninput="renderShop()" style="margin-left:auto;padding:6px 10px;border-radius:6px;background:#111;color:#fff;border:1px solid var(--bd)">
+      <input id="q-inp" placeholder="🔍 搜尋：梨山、紫砂、螢光魚、航母、紅龍..." oninput="renderShop()" style="margin-left:auto;padding:8px 12px;border-radius:8px;background:#fff;border:1px solid var(--bd)">
     </div>
     <div class="grid" id="p-grid"></div>
   </div>
 </div></div>
 
 <!-- 塔羅 Modal -->
-<div class="modal" id="m-tarot"><div class="mbox" style="max-width:820px">
+<div class="modal" id="m-tarot"><div class="mbox" style="max-width:840px">
   <div class="mhead"><h3 style="color:var(--gold)">🔮 街角塔羅占卜攤 — 召喚今日奇遇 NPC 委託人</h3><button class="btn" onclick="closeM('m-tarot')">✕</button></div>
   <div class="mbody"><div class="grid" id="t-grid"></div></div>
 </div></div>
 
 <!-- 直播 Modal -->
-<div class="modal" id="m-live"><div class="mbox" style="max-width:700px">
-  <div class="mhead" style="background:#4a1818"><h3>🔴 官方直播間 & 短影音中心 (直播中：養魚倉庫紅龍魚 & 梨山茶開箱)</h3><button class="btn" onclick="closeM('m-live')">✕</button></div>
+<div class="modal" id="m-live"><div class="mbox" style="max-width:720px">
+  <div class="mhead" style="background:#fce8e6"><h3 style="color:#c5221f">🔴 官方直播間 & 短影音中心 (直播中：養魚倉庫紅龍魚 & 梨山茶開箱)</h3><button class="btn" onclick="closeM('m-live')">✕</button></div>
   <div class="mbody">
-    <p style="background:#261b16;padding:10px;border-radius:8px;font-size:.84rem;line-height:1.5;margin-bottom:10px">
-      🎙️ <b>主播店長：</b>「各位海派大哥、年輕朋友晚上好！今天展示自有倉庫的『印尼血豔辣椒紅龍魚』、超會生小魚的『$50 孔雀航母』、合作造景師的『透明玻璃罩苔蘚觀景缸』跟『底附2條螢光魚的水生植物』，還有正宗中國宜興紫砂壺泡台中梨山茶！答對問題馬上領紅包！」
+    <p style="background:#fff;padding:12px;border-radius:10px;font-size:.88rem;line-height:1.5;margin-bottom:12px;border:1px solid var(--bd)">
+      🎙️ <b>主播店長：</b>「各位海派大哥、質感朋友晚上好！今天在陽光溫室展示自有倉庫的『印尼血豔辣椒紅龍魚』、超會生小魚的『$50 孔雀航母』、合作造景師手作的『透明罩苔蘚觀景缸』跟『底附2條螢光魚的水生植物』，還有正宗中國宜興紫砂壺泡台中梨山茶！答對問題馬上發紅包！」
     </p>
-    <div style="background:#161210;padding:12px;border-radius:8px;border:1px solid var(--bd);margin-bottom:10px">
-      <b style="color:var(--gold);font-size:.88rem" id="lz-q"></b>
-      <div id="lz-opts" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+    <div style="background:#fff;padding:14px;border-radius:10px;border:1px solid var(--bd);margin-bottom:12px">
+      <b style="color:var(--gold);font-size:.9rem" id="lz-q"></b>
+      <div id="lz-opts" style="display:flex;flex-direction:column;gap:8px;margin-top:10px"></div>
     </div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:10px">
       <button class="abtn" onclick="liveAct(120,'🧧 刷「+1 想要梨山茶與螢光魚水生瓶」搶到直播紅包 +$120！')">💬 刷「+1」搶直播福袋 (+$120)</button>
       <button class="abtn" style="background:var(--grn)" onclick="liveAct(280,'🎬 拍攝小窩「茶・魚・植」短影音爆紅！獲得流量分紅 +$280！')">🎬 拍短影音上傳社群 (+$280)</button>
     </div>
@@ -135,22 +135,22 @@ body,html{width:100%;height:100%;overflow:hidden;background:#120e0b;color:#f5efe
 </div></div>
 
 <!-- 小窩養成 Modal -->
-<div class="modal" id="m-loft"><div class="mbox" style="max-width:720px">
-  <div class="mhead"><h3 style="color:var(--gold)">🏡 我的木質頂樓小窩 — 孔雀航母繁殖、宜興紫砂養壺與微景觀照料</h3><button class="btn" onclick="closeM('m-loft')">✕</button></div>
-  <div class="mbody" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+<div class="modal" id="m-loft"><div class="mbox" style="max-width:750px">
+  <div class="mhead"><h3 style="color:var(--gold)">🏡 我的北歐風木質小窩 — 孔雀航母繁殖、宜興紫砂養壺與微景觀照料</h3><button class="btn" onclick="closeM('m-loft')">✕</button></div>
+  <div class="mbody" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px">
     <div class="card">
-      <h4 style="color:#69c0ff">🐟 孔雀航母繁殖缸</h4>
-      <p style="font-size:.76rem;color:#ccc;margin:6px 0">買「$50 孔雀航母(F12/F13)」每20秒自動生小魚！目前待售小魚：<b id="l-fry" style="color:var(--gold)">0</b> 尾</p>
+      <h4 style="color:#0277bd">🐟 孔雀航母繁殖缸</h4>
+      <p style="font-size:.78rem;color:#666;margin:8px 0">買「$50 孔雀航母(F12/F13)」每20秒自動生小魚！待售小魚：<b id="l-fry" style="color:var(--gold)">0</b> 尾</p>
       <button class="abtn" style="background:var(--aqua)" onclick="sellFry()">💰 賣小魚給合作水族館</button>
     </div>
     <div class="card">
-      <h4 style="color:var(--gold)">🫖 宜興紫砂養壺席</h4>
-      <p style="font-size:.76rem;color:#ccc;margin:6px 0">用台中梨山茶養出紫砂雙氣孔溫潤包漿！目前包漿度：<b id="l-pat" style="color:var(--gold)">10%</b></p>
+      <h4 style="color:#b37d14">🫖 宜興紫砂養壺席</h4>
+      <p style="font-size:.78rem;color:#666;margin:8px 0">用台中梨山茶養出紫砂雙氣孔溫潤包漿！目前包漿度：<b id="l-pat" style="color:var(--gold)">10%</b></p>
       <button class="abtn" onclick="brewTea()">🍵 泡梨山茶養壺 (+體力&包漿)</button>
     </div>
     <div class="card">
-      <h4 style="color:#8ce6a5">🌱 透明罩苔蘚&螢光魚瓶</h4>
-      <p style="font-size:.76rem;color:#ccc;margin:6px 0">照料造景師透明罩苔蘚缸、發財樹與水生植物底部的2條螢光魚！</p>
+      <h4 style="color:var(--moss)">🌱 透明罩苔蘚&螢光魚瓶</h4>
+      <p style="font-size:.78rem;color:#666;margin:8px 0">照料造景師透明罩苔蘚缸、發財樹與水生植物底部的2條螢光魚！</p>
       <button class="abtn" style="background:var(--grn)" onclick="carePlant()">💧 噴霧與點亮螢光魚燈 (+$110)</button>
     </div>
   </div>
@@ -158,8 +158,7 @@ body,html{width:100%;height:100%;overflow:hidden;background:#120e0b;color:#f5efe
 
 <script>
 // ============================================================================
-// 【演算法 1：矩陣字典映射演算法】用極簡字串壓縮 102 項完整商品，0.001秒自動解壓縮！
-// 格式: "名稱|真錢NT$|金幣價|商品產地與特質細節|遊戲加成Buff"
+// 102 項商品壓縮資料庫與塔羅 NPC 系統
 // ============================================================================
 const RAW_DB = {
   TEA: [
@@ -276,7 +275,6 @@ const RAW_DB = {
   ]
 };
 
-// 自動解壓縮生成 102 項標準商品物件陣列
 const ITEMS = [];
 const PFX = { TEA:'T', WARE:'W', PLANT:'P', FISH:'F', BUNDLE:'B' };
 Object.keys(RAW_DB).forEach(cat => {
@@ -287,7 +285,6 @@ Object.keys(RAW_DB).forEach(cat => {
   });
 });
 
-// 8大塔羅NPC委託壓縮表
 const QUESTS = [
   ["Ⅰ.魔術師","✨","短影音創作者・阿凱","想找「底附2條螢光魚的水生植物」或「$300梨山茶包」提神拍片！",["P01","P02","P03","P04","P05","P06","T01","T02","T03","B01","B03"],850,25],
   ["Ⅲ.皇后","🌿","室內設計師・Mia","佈置陽光溫室茶席，急需造景師「透明罩苔蘚觀景缸」或「白瓷/汝窯茶杯」！",["P07","P08","P09","P10","P11","P12","P13","W08","W10","B04","B07"],2200,45],
@@ -306,11 +303,9 @@ const QUIZZES = [
   ["Q4：養魚倉庫裡 $50 一條、體型巨大超會生小魚的招牌種母叫什麼？",["A. 霸氣「孔雀航母」","B. 翻車魚","C. 鯨魚"],0]
 ];
 
-// ============================================================================
-// 遊戲狀態與核心互動
-// ============================================================================
+// 遊戲狀態
 let S = { coins:500, sta:100, rep:10, inv:['T01','P01','F01'], cart:[], vip:false, scene:'street', qIdx:null, fry:2, pat:10, zIdx:0 };
-try { const sv = localStorage.getItem('TF_SAVE_V2'); if(sv) S = {...S, ...JSON.parse(sv)}; } catch(e){}
+try { const sv = localStorage.getItem('TF_SAVE_V3'); if(sv) S = {...S, ...JSON.parse(sv)}; } catch(e){}
 
 function toast(m){ const t=document.getElementById('toast'); t.innerHTML=m; t.style.display='block'; clearTimeout(window._tt); window._tt=setTimeout(()=>t.style.display='none',3500); }
 function sync(){
@@ -322,10 +317,9 @@ function sync(){
   document.getElementById('l-fry').innerText = S.fry;
   document.getElementById('l-pat').innerText = S.pat + '%';
   document.getElementById('lv-txt').innerText = S.rep>=800?'Lv.5 傳奇收藏大亨':S.rep>=300?'Lv.4 風水生態名家':S.rep>=100?'Lv.3 大哥指定買手':S.rep>=40?'Lv.2 巷弄尋寶客':'Lv.1 都市新居民';
-  try{ localStorage.setItem('TF_SAVE_V2', JSON.stringify(S)); }catch(e){}
+  try{ localStorage.setItem('TF_SAVE_V3', JSON.stringify(S)); }catch(e){}
 }
 
-// 孔雀航母自動繁殖 & 螢光魚水生瓶被動收入
 setInterval(()=>{
   const carriers = S.inv.filter(x=>x==='F12'||x==='F13'||x==='B02').length;
   if(carriers>0) S.fry += carriers * 2;
@@ -334,7 +328,7 @@ setInterval(()=>{
   sync();
 }, 12000);
 
-// 商城系統
+// 商城
 let sMode = 'coin', sCat = 'ALL';
 function openShop(m){ if(m) switchMode(m); openModal('m-shop'); renderShop(); }
 function openModal(id){ document.getElementById(id).classList.add('open'); if(id==='m-tarot') renderTarot(); if(id==='m-live') renderQuiz(); }
@@ -358,13 +352,13 @@ function renderShop(){
       ${cnt?`<span class="badge">已收藏×${cnt}</span>`:''}
       <div>
         <div style="font-size:.7rem;color:#999">[${p.id}]</div>
-        <div style="font-weight:700;font-size:.9rem;margin:3px 0;color:#f5ece2">${p.name}</div>
-        <div style="font-size:.75rem;color:#bfb0a0;margin-bottom:6px">${p.desc}</div>
-        <div style="font-size:.72rem;color:var(--gold);background:rgba(230,179,71,0.12);padding:4px 6px;border-radius:5px;margin-bottom:8px">✨ ${p.buff}</div>
+        <div style="font-weight:700;font-size:.9rem;margin:3px 0;color:#2c221b">${p.name}</div>
+        <div style="font-size:.75rem;color:#6b5748;margin-bottom:6px">${p.desc}</div>
+        <div style="font-size:.72rem;color:#b37d14;background:rgba(217,155,38,0.1);padding:4px 6px;border-radius:5px;margin-bottom:8px">✨ ${p.buff}</div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <b style="color:${sMode==='coin'?'var(--gold)':'#8ce6a5'}">${sMode==='coin'?'🪙 $'+p.coin.toLocaleString():'NT$ '+p.nt.toLocaleString()}</b>
-        <button class="btn" style="background:${sMode==='coin'?'var(--grn)':'var(--aqua)'}" onclick="${sMode==='coin'?`buyCoin('${p.id}')`:`addCart('${p.id}')`}">${sMode==='coin'?'金幣購入':'＋購物車'}</button>
+        <b style="color:${sMode==='coin'?'#b37d14':'#137333'}">${sMode==='coin'?'🪙 $'+p.coin.toLocaleString():'NT$ '+p.nt.toLocaleString()}</b>
+        <button class="btn" style="background:${sMode==='coin'?'var(--grn)':'var(--aqua)'};color:#fff" onclick="${sMode==='coin'?`buyCoin('${p.id}')`:`addCart('${p.id}')`}">${sMode==='coin'?'金幣購入':'＋購物車'}</button>
       </div>
     </div>`;
   }).join('');
@@ -393,22 +387,22 @@ function checkout(){
   S.cart = []; sync(); updateCartUI();
 }
 
-// 塔羅與任務
+// 塔羅
 function renderTarot(){
   document.getElementById('t-grid').innerHTML = QUESTS.map((q,i)=>`
-    <div class="card" style="cursor:pointer;text-align:center;border-color:#b388eb" onclick="pickQuest(${i})">
+    <div class="card" style="cursor:pointer;text-align:center;border-color:#d99b26" onclick="pickQuest(${i})">
       <div style="font-size:2rem">${q[1]}</div>
-      <b style="color:var(--gold);margin:4px 0">${q[0]}</b>
-      <div style="font-size:.8rem;color:#e2d1f0;margin-bottom:6px">👤 ${q[2]}</div>
-      <div style="font-size:.74rem;color:#bbb;margin-bottom:8px">${q[3]}</div>
-      <b style="font-size:.76rem;color:#8ce6a5">賞金 +$${q[5].toLocaleString()}｜聲望 +${q[6]}</b>
+      <b style="color:#b37d14;margin:4px 0">${q[0]}</b>
+      <div style="font-size:.8rem;color:#4a3b32;margin-bottom:6px;font-weight:600">👤 ${q[2]}</div>
+      <div style="font-size:.74rem;color:#666;margin-bottom:8px">${q[3]}</div>
+      <b style="font-size:.76rem;color:#137333">賞金 +$${q[5].toLocaleString()}｜聲望 +${q[6]}</b>
     </div>
   `).join('');
 }
 function pickQuest(i){
   S.qIdx = i; const q = QUESTS[i];
   document.getElementById('q-tag').innerText = q[0];
-  document.getElementById('q-desc').innerHTML = `<b>【${q[2]}】</b><br>${q[3]}<br><span style="color:#ffd666">需要商品編號含：${q[4].slice(0,5).join('/')} 等</span>`;
+  document.getElementById('q-desc').innerHTML = `<b>【${q[2]}】</b><br>${q[3]}<br><span style="color:#b37d14">需要商品編號含：${q[4].slice(0,5).join('/')} 等</span>`;
   closeM('m-tarot'); toast(`🔮 抽出【${q[0]}】！已觸發「<b>${q[2]}</b>」的尋寶委託！`);
 }
 function finishQuest(){
@@ -426,11 +420,10 @@ function finishQuest(){
   toast(`🎊 成功交付【${q[2]}】委託！獲得賞金 <b>+$${win.toLocaleString()}</b> 與聲望 +${q[6]}！`);
 }
 
-// 直播與小窩養成
 function renderQuiz(){
   const z = QUIZZES[S.zIdx % QUIZZES.length];
   document.getElementById('lz-q').innerText = z[0];
-  document.getElementById('lz-opts').innerHTML = z[1].map((o,i)=>`<button class="btn" style="text-align:left" onclick="ansQuiz(${i})">${o}</button>`).join('');
+  document.getElementById('lz-opts').innerHTML = z[1].map((o,i)=>`<button class="btn" style="text-align:left;background:#fff" onclick="ansQuiz(${i})">${o}</button>`).join('');
 }
 function ansQuiz(i){
   if(i===0){ S.coins+=350; S.rep+=15; S.vip=true; S.zIdx++; sync(); renderQuiz(); toast('🎉 答對了！獲得直播紅包 +$350 金幣 & 真錢商城 85 折 VIP 券！'); }
@@ -445,7 +438,6 @@ function sellFry(){
 function brewTea(){ S.sta=100; S.pat=Math.min(100,S.pat+12); S.coins+=100; S.rep+=10; sync(); toast(`🍵 用宜興紫砂壺沖泡台中梨山茶！體力全滿，壺身包漿度升至 ${S.pat}%！`); }
 function carePlant(){ S.coins+=110; S.rep+=8; sync(); toast('💧 已為透明罩苔蘚缸噴霧並點亮水生植物底部的 2 條螢光魚，獲得 +$110！'); }
 
-// 一鍵下載自己成為 index.html 檔案
 function downloadSelf(){
   const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
   const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
@@ -457,7 +449,7 @@ function downloadSelf(){
 }
 
 // ============================================================================
-// 【演算法 2：程序化 3D 實體合成器】極簡公式生成四大 3D 場景、鎮店大魚缸與游動魚群
+// 3D 高質感可愛淺木質風世界 (草地、馬路、陽光溫室旗艦店、養魚倉庫、木質小窩)
 // ============================================================================
 let scene, cam, ren, player, grp, fishes=[], zones=[], keys={}, camAng=0, camDist=19;
 function init3D(){
@@ -467,17 +459,17 @@ function init3D(){
   ren.setSize(innerWidth, innerHeight);
   document.getElementById('canvas-box').appendChild(ren.domElement);
 
-  scene.add(new THREE.AmbientLight(0xffeedd, 0.7));
-  const dl = new THREE.DirectionalLight(0xfff0dd, 0.9); dl.position.set(10,20,12); scene.add(dl);
+  scene.add(new THREE.AmbientLight(0xfff5e6, 0.8));
+  const dl = new THREE.DirectionalLight(0xfffaee, 0.95); dl.position.set(12,25,14); scene.add(dl);
   grp = new THREE.Group(); scene.add(grp);
 
-  // 主角模型
+  // 可愛風主角模型
   player = new THREE.Group();
-  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.55,1.4,12), new THREE.MeshStandardMaterial({color:0x3b6e4c})); b.position.y=0.7;
-  const h = new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12), new THREE.MeshStandardMaterial({color:0xf2d2b6})); h.position.y=1.7;
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.5,1.2,12), new THREE.MeshStandardMaterial({color:0x529e67, roughness:0.3})); b.position.y=0.6;
+  const h = new THREE.Mesh(new THREE.SphereGeometry(0.38,12,12), new THREE.MeshStandardMaterial({color:0xfde8d0, roughness:0.3})); h.position.y=1.5;
   player.add(b, h); scene.add(player);
 
-  build3D('street');
+  setScene('street');
 
   window.onkeydown = e => keys[e.key.toLowerCase()] = true;
   window.onkeyup = e => keys[e.key.toLowerCase()] = false;
@@ -519,14 +511,14 @@ function init3D(){
 }
 
 function addBox(x,y,z,w,h,d,col,op,fn){
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshStandardMaterial({color:col,transparent:op<1,opacity:op,roughness:0.3}));
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshStandardMaterial({color:col,transparent:op<1,opacity:op,roughness:0.25}));
   m.position.set(x,y,z); grp.add(m);
   if(fn){ m.userData.fn = fn; zones.push(m); }
   return m;
 }
 function addFish(cx,cy,cz,rx,col,sc){
-  const g = new THREE.ConeGeometry(0.22*sc, 0.75*sc, 8); g.rotateZ(Math.PI/2);
-  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.4}));
+  const g = new THREE.ConeGeometry(0.2*sc, 0.7*sc, 8); g.rotateZ(Math.PI/2);
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.35}));
   m.position.set(cx,cy,cz); grp.add(m);
   fishes.push({m, cx, cy, rx, sp:1+Math.random()});
 }
@@ -540,45 +532,54 @@ function setScene(sc){
 function build3D(sc){
   while(grp.children.length) grp.remove(grp.children[0]);
   fishes=[]; zones=[];
-  const fCols = {street:0x221f26, store:0x5c3e2b, warehouse:0x13222b, loft:0x6e4f3a};
-  scene.background = new THREE.Color(fCols[sc]);
-  addBox(0,-0.1,0, 28,0.2,24, fCols[sc], 1);
+  
+  // 草地與景觀底色
+  scene.background = new THREE.Color(0xf0eae1);
+  addBox(0,-0.1,0, 30,0.2,26, 0xd4e4d2, 1); // 綠意草地
 
   if(sc==='street'){
-    addBox(-6,1.8,-2, 3.5,3.6,3.5, 0x6a359c, 1, ()=>openModal('m-tarot')); // 塔羅占卜攤
-    addBox(6,1.2,-2, 3.8,1.6,2.2, 0x111111, 1, ()=>finishQuest());         // 大哥黑頭車與委託交付
-    addBox(4,0.9,-2, 1.0,1.8,1.0, 0xc93b3b, 1, ()=>finishQuest());         // 海派大哥龍哥NPC
-    addBox(0,2.5,-8, 8,5,1.5, 0x8a5a36, 1, ()=>setScene('store'));         // 進入木質旗艦店
+    // 馬路與石板路
+    addBox(0,0,0, 30,0.22,4, 0xb8b0a2, 1);
+    // 塔羅占卜可愛小帳篷
+    addBox(-7,1.8,-3, 3.2,3.4,3.2, 0x9c6ade, 1, ()=>openModal('m-tarot'));
+    // 大哥黑頭車與 NPC
+    addBox(7,1.0,-2, 4.2,1.6,2.4, 0x333333, 1, ()=>finishQuest());
+    addBox(4.5,0.9,-2, 0.9,1.6,0.9, 0xd9534f, 1, ()=>finishQuest());
+    // 進入淺木質旗艦店入口
+    addBox(0,2.5,-8, 8,5,1.5, 0xe8d5b7, 1, ()=>setScene('store'));
   } else if(sc==='store'){
-    // 中央鎮店巨型觀賞大魚缸 (純觀賞非賣，內有紅龍魚與血玉)
-    addBox(0,2.0,-3, 7,3.4,2.4, 0x38b6ff, 0.38, ()=>toast('🐟【鎮店觀賞大魚缸(非賣品)】霸氣紅龍魚與血玉悠游其中！想買魚請點商城或去後巷養魚倉庫！'));
-    addFish(0,2.3,-3, 2.3, 0xff2200, 1.7); addFish(-1,1.5,-3, 1.8, 0xff5533, 1.2); addFish(1,1.9,-3, 2.0, 0xffbb00, 1.3);
-    // 左：梨山茶與中國宜興紫砂壺木質茶席
-    addBox(-7,0.7,1, 4.2,1.4,2.2, 0x8a5a36, 1, ()=>{openShop('coin');setCat('TEA',document.querySelectorAll('#m-shop .btn')[2]);});
+    // 淺木質地板
+    addBox(0,0,0, 30,0.22,26, 0xe8d5b7, 1);
+    // 鎮店巨型觀賞大魚缸 (內有紅龍魚與血玉)
+    addBox(0,2.0,-3, 7,3.4,2.4, 0x4fc3f7, 0.35, ()=>toast('🐟【鎮店觀賞大魚缸】霸氣紅龍魚與血玉悠游其中！'));
+    addFish(0,2.3,-3, 2.3, 0xff2200, 1.7); addFish(-1,1.5,-3, 1.8, 0xff5533, 1.2); addFish(1,2.1,-3, 2.0, 0xffbb00, 1.3);
+    // 左：梨山茶與宜興紫砂壺木質展示桌
+    addBox(-7,0.7,1, 4.2,1.4,2.2, 0xd4b595, 1, ()=>{openShop('coin');setCat('TEA',document.querySelectorAll('#m-shop .btn')[2]);});
     addBox(-7,1.6,1, 0.8,0.6,0.8, 0x8c2d19, 1, ()=>openShop('coin'));
-    // 右：合作造景師透明罩苔蘚觀景缸 + 水生植物(底附2條螢光魚) + 發財樹
-    addBox(7,0.7,1, 4.2,1.4,2.2, 0x3b6e4c, 1, ()=>{openShop('coin');setCat('PLANT',document.querySelectorAll('#m-shop .btn')[4]);});
-    addBox(7,1.8,1, 1.5,1.5,1.5, 0xaaffcc, 0.45, ()=>openShop('coin'));
+    // 右：透明罩苔蘚缸 + 水生植物(附2條螢光魚) + 發財樹
+    addBox(7,0.7,1, 4.2,1.4,2.2, 0xa3c1ad, 1, ()=>{openShop('coin');setCat('PLANT',document.querySelectorAll('#m-shop .btn')[4]);});
+    addBox(7,1.8,1, 1.5,1.5,1.5, 0xc8e6c9, 0.45, ()=>openShop('coin'));
     addFish(7,1.4,1, 0.4, 0x00ffcc, 0.45); addFish(7,1.6,1, 0.4, 0xff44ff, 0.45);
-    // 前：直播與短影音工作台
-    addBox(-7,1.6,-4.5, 1.4,3.2,1.4, 0xff4d4f, 1, ()=>openModal('m-live'));
+    // 前：直播工作台
+    addBox(-7,1.6,-4.5, 1.4,3.2,1.4, 0xef5350, 1, ()=>openModal('m-live'));
   } else if(sc==='warehouse'){
-    // 後巷養魚倉庫與合作水族館($5小魚 / $50孔雀航母 / 血玉與紅龍魚)
-    [[-6,0x00e5ff,0x55ffff,0.6],[0,0x2ca8c2,0xffaaff,1.1],[6,0x4a1c1c,0xff2200,1.7]].forEach(([x,c,fc,s])=>{
-      addBox(x,1.6,-3, 4.5,3.2,2.2, c, 0.45, ()=>openShop('coin'));
-      addFish(x,1.8,-3, 1.5, fc, s); addFish(x,1.2,-3, 1.3, 0xffdd44, s*0.8);
+    addBox(0,0,0, 30,0.22,26, 0xc2d1d9, 1);
+    // 養魚倉庫與水族館蓄養槽 ($5小魚 / $50孔雀航母 / 血玉與紅龍魚)
+    [[-6,0x4fc3f7,0x80ffff,0.6],[0,0x0288d1,0xff80ff,1.1],[6,0x37474f,0xff3d00,1.7]].forEach(([x,c,fc,s])=>{
+      addBox(x,1.6,-3, 4.8,3.2,2.2, c, 0.45, ()=>openShop('coin'));
+      addFish(x,1.8,-3, 1.6, fc, s); addFish(x,1.2,-3, 1.4, 0xffd54f, s*0.8);
     });
   } else if(sc==='loft'){
-    // 我的木質小窩：動態展示已購買的茶席、魚缸與透明罩苔蘚螢光魚
-    addBox(0,0.6,0, 4,1.2,2.2, 0x5c3e2b, 1, ()=>openModal('m-loft'));
-    addBox(-0.6,1.4,0, 0.7,0.6,0.7, 0x9e3b24, 1, ()=>openModal('m-loft'));
-    addBox(-6,1.5,-2, 5,3,2, 0x2ca8c2, 0.4, ()=>openModal('m-loft'));
+    addBox(0,0,0, 30,0.22,26, 0xf5f0ea, 1);
+    // 北歐風木質小窩
+    addBox(0,0.6,0, 4,1.2,2.2, 0xd4b595, 1, ()=>openModal('m-loft'));
+    addBox(-6,1.5,-2, 5,3,2, 0x4fc3f7, 0.38, ()=>openModal('m-loft'));
     S.inv.filter(id=>id.startsWith('F')||id.startsWith('B')).slice(0,10).forEach((id,i)=>{
       const big = ['F21','F22','F23','F24','B11','B12'].includes(id);
-      addFish(-6, 0.9+(i%4)*0.45, -2, 1.6, big?0xff1e00:0x40e0d0, big?1.5:0.75);
+      addFish(-6, 0.9+(i%4)*0.45, -2, 1.6, big?0xff1e00:0x00e676, big?1.5:0.75);
     });
-    addBox(6,1.5,-2, 2.2,3,2.2, 0x3b8c4c, 0.5, ()=>openModal('m-loft'));
-    addFish(6,0.8,-2, 0.5, 0x00ffaa, 0.45); addFish(6,1.0,-2, 0.5, 0xff66ff, 0.45);
+    addBox(6,1.5,-2, 2.2,3,2.2, 0xa3c1ad, 0.5, ()=>openModal('m-loft'));
+    addFish(6,0.8,-2, 0.5, 0x00ffcc, 0.45); addFish(6,1.0,-2, 0.5, 0xff4081, 0.45);
   }
 }
 
