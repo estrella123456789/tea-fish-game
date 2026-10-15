@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>《茶魚植境：我的都市尋寶生活》3D 互動品牌遊戲</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{--bg:rgba(24,18,14,0.88);--bd:rgba(215,191,166,0.3);--gold:#e6b347;--grn:#3b6e4c;--moss:#66b87d;--aqua:#2ca8c2}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'PingFang TC','Microsoft JhengHei',sans-serif;user-select:none}
+body,html{width:100%;height:100%;overflow:hidden;background:#120e0b;color:#f5efe6}
+#canvas-box{position:absolute;inset:0;z-index:1}
+.glass{background:var(--bg);backdrop-filter:blur(10px);border:1px solid var(--bd);border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,0.5)}
+.hud{position:absolute;top:10px;left:12px;right:12px;z-index:10;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;padding:10px 16px;gap:8px}
+.stats{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pill{background:rgba(255,255,255,0.08);padding:5px 11px;border-radius:8px;font-size:.84rem;border:1px solid rgba(255,255,255,0.12)}
+.pill b{color:var(--gold)}
+.nav{position:absolute;top:72px;left:12px;z-index:10;display:flex;flex-wrap:wrap;gap:6px}
+.btn{background:var(--bg);color:#efe6dd;border:1px solid var(--bd);padding:7px 12px;border-radius:9px;cursor:pointer;font-size:.82rem;transition:.2s}
+.btn:hover,.btn.act{background:#5c3e2b;border-color:var(--gold);color:#fff;transform:translateY(-2px)}
+.qpanel{position:absolute;top:120px;left:12px;width:300px;z-index:10;padding:12px;border-left:4px solid var(--gold)}
+.qpanel h3{font-size:.9rem;color:var(--gold);margin-bottom:5px;display:flex;justify-content:space-between}
+.qpanel p{font-size:.78rem;line-height:1.45;color:#dfd3c3;margin-bottom:8px}
+.abtn{width:100%;padding:7px;border:none;border-radius:7px;background:linear-gradient(135deg,#d49b35,#9c6210);color:#fff;font-weight:700;font-size:.8rem;cursor:pointer}
+.dock{position:absolute;bottom:16px;right:16px;z-index:10;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.hint{position:absolute;bottom:14px;left:12px;z-index:10;padding:6px 12px;font-size:.76rem;color:#c7b8a6}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.72);display:none;justify-content:center;align-items:center;padding:14px}
+.modal.open{display:flex}
+.mbox{width:100%;max-width:960px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;background:#1c1612;border:1px solid var(--gold);border-radius:16px}
+.mhead{padding:14px 18px;background:#2a2019;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bd)}
+.mbody{padding:16px;overflow-y:auto;flex:1}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px;margin-top:10px}
+.card{background:#261d17;border:1px solid var(--bd);border-radius:10px;padding:11px;display:flex;flex-direction:column;justify-content:space-between;position:relative}
+.card:hover{border-color:var(--gold)}
+.badge{position:absolute;top:8px;right:8px;background:#234730;color:#8ce6a5;font-size:.68rem;padding:2px 6px;border-radius:8px}
+#toast{position:fixed;top:76px;right:16px;z-index:99;background:#203828;border:1px solid var(--moss);color:#fff;padding:10px 16px;border-radius:9px;font-size:.84rem;display:none;max-width:330px}
+</style>
+</head>
+<body>
+<div id="canvas-box"></div>
+<div id="toast"></div>
+
+<header class="hud glass">
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:1.4rem">🍵🐟🌱</span>
+    <div>
+      <b style="font-size:1.05rem;color:#ecd9c6">茶魚植境：都市尋寶生活</b>
+      <span id="lv-txt" style="background:var(--grn);font-size:.7rem;padding:2px 7px;border-radius:12px;margin-left:6px">Lv.1 都市新居民</span>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="pill">🪙 金幣 <b id="s-coin">500</b></div>
+    <div class="pill">⚡ 體力 <b id="s-sta">100</b></div>
+    <div class="pill">✨ 聲望 <b id="s-rep">10</b></div>
+    <div class="pill">📖 圖鑑 <b id="s-col">3/102</b></div>
+    <button class="btn" style="border-color:var(--moss)" onclick="openShop('real')">🛒 真錢購物車 (<b id="s-cart">0</b>)</button>
+    <button class="btn" style="background:#2b4c66;border-color:#69c0ff" onclick="downloadSelf()">💾 下載此網頁檔</button>
+  </div>
+</header>
+
+<nav class="nav">
+  <button class="btn act" id="b-street" onclick="setScene('street')">🏙️ 城市街頭 & 塔羅攤</button>
+  <button class="btn" id="b-store" onclick="setScene('store')">🍵 木質旗艦店 (鎮店大魚缸)</button>
+  <button class="btn" id="b-warehouse" onclick="setScene('warehouse')">🐟 後巷養魚倉庫 & 水族區</button>
+  <button class="btn" id="b-loft" onclick="setScene('loft')">🏡 我的木質頂樓小窩</button>
+</nav>
+
+<aside class="qpanel glass">
+  <h3><span>📜 都市尋寶委託</span><span id="q-tag" style="font-size:.72rem;color:#8ce6a5">抽牌觸發</span></h3>
+  <p id="q-desc">前往街角【🔮 塔羅占卜攤】抽牌，看看今天會遇到哪位粗獷沉穩的大哥或都市客人需要你去店裡與養魚倉庫尋寶！</p>
+  <div style="display:flex;gap:6px">
+    <button class="abtn" onclick="openModal('m-tarot')">🔮 塔羅抽牌</button>
+    <button class="abtn" style="background:var(--grn)" onclick="finishQuest()">✅ 交付委託</button>
+  </div>
+</aside>
+
+<div class="dock">
+  <button class="btn" style="background:#9e2222;border-color:#ff7875;font-weight:700" onclick="openModal('m-live')">🔴 參與店家直播 & 拍短影音 (+1搶紅包)</button>
+  <button class="btn" onclick="openModal('m-tarot')">🔮 街角塔羅占卜攤 (觸發8大NPC)</button>
+  <button class="btn" onclick="openModal('m-loft')">🏡 小窩養成：孔雀航母繁殖 & 紫砂養壺</button>
+  <button class="btn" style="border-color:var(--gold);font-weight:700" onclick="openShop('coin')">🛒 102品項雙軌商城 (金幣/真錢購買)</button>
+</div>
+
+<div class="hint glass">🕹️ <b>操作：</b>鍵盤 <b>WASD/方向鍵</b> 移動角色 ｜ <b>滑鼠拖曳</b> 旋轉3D視角 ｜ <b>點擊3D物件</b> 互動</div>
+
+<!-- 商城 Modal -->
+<div class="modal" id="m-shop"><div class="mbox">
+  <div class="mhead"><h3 style="color:var(--gold)">🛒 茶魚植境・102 品項虛實雙軌旗艦商城</h3><button class="btn" onclick="closeM('m-shop')">✕</button></div>
+  <div class="mbody">
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <button class="abtn" id="t-coin" onclick="switchMode('coin')">🪙 遊戲金幣購買 (佈置3D小窩 & 解NPC任務)</button>
+      <button class="abtn" id="t-real" style="background:#234730" onclick="switchMode('real')">💳 品牌真錢商城 (新台幣NT$購買・享遊戲VIP折扣)</button>
+    </div>
+    <div id="cart-bar" style="display:none;background:#193022;padding:10px;border-radius:8px;margin-bottom:10px;justify-content:space-between;align-items:center">
+      <span>💳 真實購物車：<b id="c-cnt">0</b> 件｜總計 <b>NT$ <span id="c-sum">0</span></b> <small id="c-vip" style="color:#ffd666"></small></span>
+      <div style="display:flex;gap:6px">
+        <button class="btn" onclick="useVip()">🎟️ 套用VIP 85折碼</button>
+        <button class="btn" style="background:var(--grn)" onclick="checkout()">✅ 模擬結帳下單</button>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+      <button class="btn act" onclick="setCat('ALL',this)">全部(102)</button>
+      <button class="btn" onclick="setCat('TEA',this)">🍵 台中梨山茶(22)</button>
+      <button class="btn" onclick="setCat('WARE',this)">🫖 宜興紫砂壺/瓷杯茶墊(22)</button>
+      <button class="btn" onclick="setCat('PLANT',this)">🌱 透明罩苔蘚缸/螢光魚水生瓶/發財樹(22)</button>
+      <button class="btn" onclick="setCat('FISH',this)">🐟 養魚倉庫&水族館($5魚/孔雀航母/血玉/紅龍)(24)</button>
+      <button class="btn" onclick="setCat('BUNDLE',this)">🎁 限定組合包(12)</button>
+      <input id="q-inp" placeholder="🔍 搜尋：梨山、紫砂、螢光魚、航母、紅龍..." oninput="renderShop()" style="margin-left:auto;padding:6px 10px;border-radius:6px;background:#111;color:#fff;border:1px solid var(--bd)">
+    </div>
+    <div class="grid" id="p-grid"></div>
+  </div>
+</div></div>
+
+<!-- 塔羅 Modal -->
+<div class="modal" id="m-tarot"><div class="mbox" style="max-width:820px">
+  <div class="mhead"><h3 style="color:var(--gold)">🔮 街角塔羅占卜攤 — 召喚今日奇遇 NPC 委託人</h3><button class="btn" onclick="closeM('m-tarot')">✕</button></div>
+  <div class="mbody"><div class="grid" id="t-grid"></div></div>
+</div></div>
+
+<!-- 直播 Modal -->
+<div class="modal" id="m-live"><div class="mbox" style="max-width:700px">
+  <div class="mhead" style="background:#4a1818"><h3>🔴 官方直播間 & 短影音中心 (直播中：養魚倉庫紅龍魚 & 梨山茶開箱)</h3><button class="btn" onclick="closeM('m-live')">✕</button></div>
+  <div class="mbody">
+    <p style="background:#261b16;padding:10px;border-radius:8px;font-size:.84rem;line-height:1.5;margin-bottom:10px">
+      🎙️ <b>主播店長：</b>「各位海派大哥、年輕朋友晚上好！今天展示自有倉庫的『印尼血豔辣椒紅龍魚』、超會生小魚的『$50 孔雀航母』、合作造景師的『透明玻璃罩苔蘚觀景缸』跟『底附2條螢光魚的水生植物』，還有正宗中國宜興紫砂壺泡台中梨山茶！答對問題馬上領紅包！」
+    </p>
+    <div style="background:#161210;padding:12px;border-radius:8px;border:1px solid var(--bd);margin-bottom:10px">
+      <b style="color:var(--gold);font-size:.88rem" id="lz-q"></b>
+      <div id="lz-opts" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="abtn" onclick="liveAct(120,'🧧 刷「+1 想要梨山茶與螢光魚水生瓶」搶到直播紅包 +$120！')">💬 刷「+1」搶直播福袋 (+$120)</button>
+      <button class="abtn" style="background:var(--grn)" onclick="liveAct(280,'🎬 拍攝小窩「茶・魚・植」短影音爆紅！獲得流量分紅 +$280！')">🎬 拍短影音上傳社群 (+$280)</button>
+    </div>
+  </div>
+</div></div>
+
+<!-- 小窩養成 Modal -->
+<div class="modal" id="m-loft"><div class="mbox" style="max-width:720px">
+  <div class="mhead"><h3 style="color:var(--gold)">🏡 我的木質頂樓小窩 — 孔雀航母繁殖、宜興紫砂養壺與微景觀照料</h3><button class="btn" onclick="closeM('m-loft')">✕</button></div>
+  <div class="mbody" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+    <div class="card">
+      <h4 style="color:#69c0ff">🐟 孔雀航母繁殖缸</h4>
+      <p style="font-size:.76rem;color:#ccc;margin:6px 0">買「$50 孔雀航母(F12/F13)」每20秒自動生小魚！目前待售小魚：<b id="l-fry" style="color:var(--gold)">0</b> 尾</p>
+      <button class="abtn" style="background:var(--aqua)" onclick="sellFry()">💰 賣小魚給合作水族館</button>
+    </div>
+    <div class="card">
+      <h4 style="color:var(--gold)">🫖 宜興紫砂養壺席</h4>
+      <p style="font-size:.76rem;color:#ccc;margin:6px 0">用台中梨山茶養出紫砂雙氣孔溫潤包漿！目前包漿度：<b id="l-pat" style="color:var(--gold)">10%</b></p>
+      <button class="abtn" onclick="brewTea()">🍵 泡梨山茶養壺 (+體力&包漿)</button>
+    </div>
+    <div class="card">
+      <h4 style="color:#8ce6a5">🌱 透明罩苔蘚&螢光魚瓶</h4>
+      <p style="font-size:.76rem;color:#ccc;margin:6px 0">照料造景師透明罩苔蘚缸、發財樹與水生植物底部的2條螢光魚！</p>
+      <button class="abtn" style="background:var(--grn)" onclick="carePlant()">💧 噴霧與點亮螢光魚燈 (+$110)</button>
+    </div>
+  </div>
+</div></div>
+
+<script>
+// ============================================================================
+// 【演算法 1：矩陣字典映射演算法】用極簡字串壓縮 102 項完整商品，0.001秒自動解壓縮！
+// 格式: "名稱|真錢NT$|金幣價|商品產地與特質細節|遊戲加成Buff"
+// ============================================================================
+const RAW_DB = {
+  TEA: [
+    "梨山日常冷熱泡原葉立體茶包(20入)|300|300|台中梨山原片切製三角茶包，冷泡清甜熱泡回甘|恢復+30體力・小資首選",
+    "梨山迎香金萱原葉茶包(20入)|280|280|天然淡雅奶香與桂花香，辦公室人氣款|恢復+25體力・上班族指定",
+    "梨山高山小葉種蜜香紅茶包(20入)|320|350|小綠葉蟬著涎發酵，琥珀湯色自帶熟果蜜香|恢復+35體力・聲望+5",
+    "合作茶商・古法炭焙凍頂烏龍茶包(25入)|300|300|龍眼木炭慢火烘焙，韻味醇厚長輩最愛|恢復+30體力・大哥好感+5",
+    "冷泡專用・梨山甘露翠玉家庭號袋茶(30入)|480|500|專為冰鎮冷泡調配，放冰箱一晚即享高山甘甜|每日自動回體力・聲望+8",
+    "梨山不知春(高山冬片四季春)二兩罐|380|420|冬季低溫萌發冬片茶芽，香氣奔放不苦澀|小窩品味與聲望+10",
+    "梨山環山部落・手採高山青茶(四兩罐)|900|1000|海拔1750m環山谷地，日照充足茶湯蜜綠|小窩品味與聲望+18",
+    "梨山思源埡口・迷霧高冷春茶(四兩罐)|1100|1250|大甲溪分水嶺雲霧繚繞，茶氣清冽鮮爽|小窩品味與聲望+22",
+    "梨山新佳陽部落・手採軟枝烏龍(四兩罐)|1200|1500|海拔2000m經典茶區，果膠豐富帶水蜜桃甜香|聲望+25・初階大哥偏愛",
+    "梨山松茂部落・三分火輕焙烏龍(四兩罐)|1380|1680|合作茶師三分微火烘焙，保留清香添溫潤米香|小窩品味與聲望+28",
+    "梨山翠巒部落・北線極品冬片(四兩罐)|1500|1800|翠巒向陽坡葉肉肥厚，湯色金黃入口即化|小窩品味與聲望+32",
+    "梨山武陵茶區・雪水灌溉金萱烏龍(半斤)|1800|2200|高山純淨溪水灌溉，奶香與高山冷韻交融|小窩品味與聲望+38",
+    "梨山天府茶區・高山著涎貴妃烏龍(四兩)|2400|2800|結合高山冷韻與濃郁荔枝蜜香，層次豐富|小窩品味與聲望+45",
+    "梨山碧綠溪・2100m高冷春茶(半斤禮盒)|2600|3200|日夜溫差15度以上，山頭氣明顯生津持久|小窩品味與聲望+52",
+    "梨山翠峰高冷・高海拔手採冬茶(半斤禮盒)|3200|3800|冬茶水路細膩溫潤、冷香沉穩耐沖8泡以上|小窩品味與聲望+60",
+    "梨山大禹嶺交界・95K雲端烏龍(四兩精裝)|3600|4200|原始森林環抱富含腐殖質，帶森林芬多精香|小窩品味與聲望+68",
+    "梨山福壽山農場周邊・極品高冷春茶(半斤)|4500|5200|海拔2300m指標茶區，花香冷冽海派大哥指定|聲望+80・龍哥任務核心",
+    "梨山華崗2450m・水源頭冷韻冬茶(半斤)|5200|6000|極高海拔孕育，茶湯滑軟如絲綢齒頰留香|聲望+95・養壺速度加倍",
+    "合作茶商壓箱・20年老甕藏梨山老茶(半斤)|6800|8000|二十載封甕自然轉化，湯色酒紅藥香沉穩|聲望+120・古董藏家必備",
+    "台中梨山翠巒・正叢頭水春茶(一斤量販包)|8800|10000|開春頭水鮮芽一斤大份量，適合天天泡茶大哥|聲望+140・無限恢復體力",
+    "梨山華崗・霜降凝香頂級冬茶(一斤大師木盒)|12800|15000|歷經高山寒霜洗禮，果膠濃稠冷韻直衝鼻腔|聲望+180・行家尊榮象徵",
+    "鎮店私房・台中梨山特等獎比賽茶王(一斤甕)|16800|22000|合作茶商奪冠之作附封籤，十泡有餘香大亨典藏|聲望+250・終極老董指定"
+  ],
+  WARE: [
+    "禪意胡桃木紋・天然竹編隔熱茶墊(壺承)|280|320|簡約木質調設計，保護桌面與紫砂壺底|品味+5・乾泡茶席基礎",
+    "蘇州宋錦織錦・手工流蘇養壺茶墊|350|400|質地柔軟吸水錦緞典雅，放紫砂壺不怕磕碰|紫砂養壺包漿速度+15%",
+    "小葉紫檀木・整木雕刻蓮花乾泡茶墊|680|800|沉水級紫檀實木打造，溫潤厚重越用越亮|聲望+15・沉穩大哥最愛",
+    "宜興紫砂雕塑・招財噴水金蟾茶寵|450|500|熱茶淋洗會吐水冒泡，象徵吐財納福|泡茶額外獲得+$40金幣",
+    "宜興原礦段泥・迷你霸氣龍魚造型茶寵|580|650|結合茶與魚靈魂！段泥雕塑龍魚越養越金黃|茶魚雙修聲望額外+20",
+    "黑檀木六君子茶道組(茶則/針/夾/漏/匙/筒)|880|1000|泡功夫茶必備行頭，黑檀木沉穩內斂|小窩品味與聲望+18",
+    "高硼硅玻璃×胡桃木握把公道杯(勻杯)|550|600|透明杯身配防燙胡桃木柄，欣賞梨山蜜綠湯色|小窩品味與聲望+12",
+    "景德鎮甜白瓷・薄胎透光聞香品茗杯(4入)|680|800|瓷胎薄如蟬翼潔白如玉，完美襯托高山茶湯|品味+16・設計師指定瓷杯",
+    "景德鎮手繪青花瓷・纏枝蓮主人杯(對杯)|980|1150|傳統鈷料手繪青花，對飲盡顯江湖情誼|聲望+22・委託賞金+10%",
+    "汝窯天青釉・蟬翼開片養生品茗杯(4入)|1280|1500|隨茶湯浸潤自然形成金絲鐵線開片紋路|小窩品味與聲望+30",
+    "德化羊脂玉白瓷・馬蹄鈴鐺杯組(6入禮盒)|1500|1800|溫潤如凝脂美玉，反口杯沿茶湯滑入舌尖|小窩品味與聲望+35",
+    "建陽建盞・鐵胎曜變油滴束口主人杯(錦盒)|1880|2200|高含鐵胎體軟化水質，星空油滴斑紋霸氣十足|小窩品味與聲望+40",
+    "宜興原礦清水泥・經典孟臣水平壺(150cc)|2200|2600|中國宜興原礦雙氣孔結構，泥色醇和新手法寶|開啟紫砂養壺・聲望+45",
+    "宜興原礦趙庄朱泥・豐潤西施壺(170cc)|2680|3500|圓潤如西施，朱泥結晶度高逼熱揚香泡青茶絕配|高山茶揚香・聲望+55",
+    "宜興黃龍山底槽清・傳統扁腹仿古壺(220cc)|3600|4200|黃龍山優質底槽清紫泥，砂感明顯端莊大器|聲望+65・包漿速度+20%",
+    "宜興黃金段泥・刻繪竹節井欄壺(240cc)|4200|5000|泥色金黃溫潤，手工刻繪竹節書法透氣極佳|小窩品味與聲望+75",
+    "宜興原礦降坡泥・雙色顆粒容天壺(200cc)|4800|5600|黃紅共生礦料表面金砂隱現，肚大能容天下事|小窩品味與聲望+85",
+    "宜興本山綠泥・全手工梨形思亭壺(160cc)|5600|6500|秀麗梨形彎流胥出，本山綠泥稀少專泡頂級春茶|小窩品味與聲望+95",
+    "宜興老紫泥・名家全手工子冶石瓢壺(230cc)|6800|8500|三角剛勁造型、直流砲管嘴出水暴爽，大哥最愛|聲望+110・龍哥指定名壺",
+    "宜興大紅袍朱泥・助工手作龍蛋壺(180cc)|8800|10500|頂級大紅袍泥色紅潤如紅寶石，聚熱揚香極致|小窩品味與聲望+135",
+    "宜興原礦天青泥・松竹梅歲寒三友報春壺|13800|16000|工藝師親製附證書，松竹梅花貨雕塑栩栩如生|小窩品味與聲望+180",
+    "宜興陳腐30年底槽清・大師級供春樹癭壺|22000|28000|鎮店孤品！仿百年古樹癭節全手工捏製夢幻逸品|聲望+260・終極名壺成就"
+  ],
+  PLANT: [
+    "翠綠黃金葛水生共生瓶(底附2條紅螢光魚)|380|420|上層水培黃金葛淨水，瓶底附2條靈動紅螢光魚|被動收入+$30・品味+10",
+    "開運富貴竹水培生態瓶(底附2條藍螢光魚)|450|500|富貴竹象徵節節高升，瓶底附2條星空藍螢光魚|被動收入+$40・品味+12",
+    "白網紋草×水晶圓球瓶(底附2條綠螢光魚)|480|550|葉脈如白網配水晶球，底部2條翡翠綠螢光魚穿梭|被動收入+$45・品味+14",
+    "圓葉椒草×原木底座瓶(底附2條橘螢光魚)|550|620|圓潤椒草聚財，配胡桃木底座與2條落日橘螢光魚|被動收入+$55・品味+16",
+    "迷你九冠水草×火山石缸(底附2條紫螢光魚)|680|780|紅火山石培菌免換水，九冠草與2條紫螢光魚共生|被動收入+$70・品味+20",
+    "造景師特調・懸浮綠球藻瓶(底附2條金螢光魚)|880|1000|北海道綠球藻Marimo搭配2條金黃螢光魚招財頂配|被動收入+$100・品味+25",
+    "迷你膠囊透明罩・白髮蘚療癒微景觀|980|1100|高透光透明罩鎖住濕度，內含絨毛翠綠白髮蘚|品味+22・免常澆水微循環",
+    "鐘型玻璃透明罩・大灰蘚與迷霧松石森林缸|1580|1800|合作造景師手作！歐式鐘型透明罩配松皮石山巒|品味+35・設計師指定款",
+    "圓頂透明罩・朵朵蘚×迷你狼尾蕨雨林觀景缸|2280|2800|透明罩內自給自足水循環，蕨類與苔蘚宛如森林|小窩品味與聲望+50",
+    "木質底座透明罩・高山雲霧溪流苔蘚觀景缸|2980|3500|實木底座配高透玻璃罩，白砂模擬蜿蜒山澗溪流|小窩品味與聲望+65",
+    "鑽石切面玻璃罩・食蟲捕蟲堇×活水苔共生缸|3200|3800|多角幾何透明玻璃罩，內植紫花捕蟲堇與活水苔|小窩品味與聲望+70",
+    "智能LED呼吸燈透明罩・枯山水苔蘚茶亭缸|4500|5200|透明罩內嵌暖白生長燈，夜間點亮如京都苔寺|小窩品味與聲望+95",
+    "殿堂級巨蛋透明罩・雙層瀑布造霧苔蘚雨林缸|6800|8000|造景師旗艦作！巨型透明罩內建真實瀑布與雲霧|聲望+150・終極大展核心",
+    "桌上型獨木小發財樹(馬拉巴栗・簡約原木盆)|480|550|粗壯樹頭萌發翠綠傘葉，配溫潤木紋盆招財首選|任務賞金永久+3%・品味+12",
+    "五辮編織幹・招財進寶中型發財樹(胡桃木盆)|1280|1500|五棵發財樹幹手工編織成辮，象徵五路財神匯聚|任務賞金+8%・熱炒老闆愛",
+    "鎮宅落地型・九宮格粗幹霸氣發財樹(大哥款)|3200|3800|150cm落地老樁霸氣規格，大哥開公司擺會所必買|任務賞金+15%・聲望+50",
+    "日本海島圓葉竹柏・禪風青苔盆景|680|750|葉色濃綠耐陰性強，俗稱發財竹柏具避邪招財意|小窩品味與聲望+18",
+    "裂葉龜背芋(電信蘭)北歐三腳實木花架組|1180|1350|熱帶溫室巨大龜背裂葉，為木質空間注入年輕活力|品味+30・短影音加成",
+    "榮華富貴・黑釉木紋盆金錢樹(美鐵芋)|1480|1700|羽狀複葉肥厚光亮如一串串銅錢，耐旱商務送禮|任務賞金+10%・聲望+32",
+    "合作造景師手作・上板二岐鹿角蕨(碳化木板)|1880|2200|霸氣下垂孢子葉如鹿角，釘於手工碳化實木板上|小窩品味與聲望+45",
+    "迎客松姿・台灣真柏舍利幹微型盆景|2680|3200|造景師蟠紮塑形，蒼勁真柏配茶席展現東方禪意|小窩品味與聲望+60",
+    "造景師孤品・百年流木附生蝴蝶蘭與空氣鳳梨|4800|5800|風化沉木結合空氣鳳梨與蘭花，立體植物雕塑|小窩品味與聲望+110"
+  ],
+  FISH: [
+    "合作水族館・活力日光燈魚(霓虹四間)|5|20|銅板價$5入門王！體側閃耀藍紅霓虹光帶群游|魚缸活力與聲望+2",
+    "合作水族館・繽紛米克斯小孔雀魚|5|20|合作水族館$5特惠，色彩隨機強健好養新手必買|魚缸活力與聲望+2",
+    "合作水族館・仙子斑馬魚/豹紋斑馬魚|10|35|僅$10/條！游動極快充滿生命力象徵財源滾滾|魚缸活力與聲望+4",
+    "合作水族館・米奇魚/紅球魚(尾柄米奇印記)|10|35|尾根有天然米奇頭斑紋，溫馴討喜情侶親子最愛|魚缸活力與聲望+4",
+    "合作水族館・除藻小幫手極火蝦/大和米蝦|10|35|魚缸天然清潔隊，幫水草苔蘚除藻紅通通超喜氣|魚缸活力與聲望+4",
+    "合作水族館・夜光閃耀五彩基因螢光魚(單售)|25|70|可單買為水生植物瓶加魚，藍燈下閃耀夢幻光芒|魚缸活力與聲望+8",
+    "合作水族館・黃金青苔鼠/可愛熊貓鼠|30|80|在底砂勤勞翻找殘餌的呆萌底棲魚，黑白眼圈討喜|魚缸活力與聲望+10",
+    "養魚倉庫・莫斯科藍純種品系孔雀魚|50|180|倉庫培育$50純種！全身深邃金屬寶藍色尾鰭飄逸|魚缸聲望+15・可配對",
+    "養魚倉庫・全紅白子(RREA)紅眼孔雀魚|50|180|酒紅透亮雙眼配無雜色火焰紅尾鰭，極度搶眼|魚缸聲望+15",
+    "養魚倉庫・德系黃尾禮服純種孔雀魚|50|180|後半身如穿深黑燕尾禮服配奶油金黃巨幅尾鰭|魚缸聲望+15",
+    "養魚倉庫・大耳馬賽克蕾絲孔雀魚|50|180|胸鰭如象耳、尾鰭布滿細緻紅藍馬賽克蕾絲紋|魚缸聲望+18",
+    "倉庫人氣王・霸氣「孔雀航母」(超巨型種母)|50|200|本店招牌！體型大2~3倍如航空母艦，極易爆缸生小魚|自動生小魚賣錢・聲望+25",
+    "倉庫特選・皇家藍尾「特級孔雀航母」(頂規)|120|400|百裡挑一巨無霸種母，一胎可產50~80尾高價小魚|雙倍高速生小魚・聲望+40",
+    "養魚倉庫・泰系半月鬥魚/巨型國王鬥魚|250|600|尾鰭展開180度如滿月扇面，色澤濃烈華麗|魚缸聲望+28",
+    "養魚倉庫・招財泰金獅頭/蘭壽金魚|680|1200|頭頂發達肉瘤如威武獅子，游動搖頭擺尾超討喜|魚缸聲望+35",
+    "養魚倉庫・爆頭潛力股珍珠羅漢魚苗|1500|2500|額頭明顯隆起(起頭)，身披閃亮珍珠鱗與梅花斑|魚缸聲望+50",
+    "鴻運血玉・A級元寶血鸚鵡(圓潤無黑斑)|2200|3200|體型渾圓如紅元寶、嘴型似笑超喜氣招財名魚|任務賞金+10%・聲望+65",
+    "鴻運血玉・特選極品「紅財神血玉」(跟手互動)|3800|5000|倉庫嚴選！通紅似赤玉背部高聳，人走近會聚過來|賞金+15%・聲望+85・彪哥指定",
+    "倉庫典藏・賽級雙頭印「帝王血玉皇」(巨無霸)|6800|8800|手掌大巨型體態隆起紅冠，沉穩大哥必收風水魚|任務賞金+20%・聲望+120",
+    "南美底棲霸主・皇冠黑白魟魚(滿天星圓盤)|12000|15000|漆黑絲絨圓盤布滿純白圓點，貼底滑行與龍魚混養|魚缸聲望+150",
+    "入門龍王・澳洲星點珍珠龍/銀帶龍魚|1800|2800|銀白修長身軀配粉紅星點鱗框，輕鬆體驗養龍霸氣|魚缸聲望+55",
+    "金光閃耀・馬來西亞過背金龍魚(附晶片證書)|18000|22000|金質爬滿第六排背鱗，游動如一條純金水中金條|魚缸聲望+200",
+    "倉庫鎮庫霸主・印尼「血豔辣椒紅龍魚」(附晶片)|58000|45000|養魚倉庫最高規格！附CITES晶片證書，赤紅霸氣|聲望+350・企業家鎮場神魚",
+    "傳奇神獸・特A級「帝王血紅龍王」(終極象徵)|128000|99999|萬中選一極品紅龍王！滿鱗深紅威猛沉穩頂點象徵|聲望+600・解鎖終極老董"
+  ],
+  BUNDLE: [
+    "【都市療癒新手包】茶香與螢光魚的午後|680|650|含：梨山日常茶包(T01)＋富貴竹水生瓶附2條藍螢光魚(P02)|回50體力＋品味+25",
+    "【水族爆缸繁殖快樂組】倉庫孔雀航母艦隊|320|600|含：霸氣孔雀航母×2(F12)＋純種公孔雀×3＋日光燈×10|繁殖生魚速度翻倍・聲望+45",
+    "【短影音爆款+1秒殺組】免換水綠意雙享|1111|1111|含：黃金葛螢光魚瓶(P01)＋白網紋草螢光魚球(P03)＋小發財樹|被動收入加倍・品味+45",
+    "【文青辦公桌綠洲組】玻璃罩裡的森林茶席|1980|2200|含：鐘型透明罩苔蘚缸(P08)＋梨山蜜香紅茶包＋景德鎮白瓷杯|品味與聲望暴增+65",
+    "【直播間盲盒・倉庫尋寶驚喜福袋】|1680|1800|含：隨機宜興紫砂壺×1＋梨山高冷茶四兩＋隨機孔雀航母或血玉|驚喜聲望+60",
+    "【老粉專屬・直播主私房工夫茶全配組】|3980|4500|含：宜興朱泥西施壺(W14)＋白瓷杯＋宋錦茶墊＋梨山新佳陽|養壺加倍・聲望+95",
+    "【造景師×茶師聯名】雲霧山林品茗組|6600|7500|含：木質底座透明罩溪流苔蘚缸(P10)＋梨山碧綠溪春茶＋汝窯杯|禪意溫室共鳴・聲望+150",
+    "【養壺進階行家組】生茶熟茶雙壺雙韻|5880|6800|含：趙庄朱泥西施壺(W14)＋底槽清仿古壺(W15)＋金蟾茶寵|雙壺齊養・聲望+140",
+    "【開幕喬遷・八方來財風水首選組】|8888|10000|含：九宮格落地大發財樹(P16)＋特選紅財神「血玉」成對(F18×2)|任務賞金+30%・聲望+180",
+    "【海派大哥・茶席會客排場組】沉穩頂配|18800|22000|含：宜興老紫泥子冶石瓢壺(W19)＋梨山春茶一斤＋紫檀茶墊|大哥折服・聲望+320",
+    "【鎮宅之寶・龍行天下大亨全配組】|88000|85000|含：印尼血豔辣椒紅龍魚(F23)＋梨山比賽茶王(T22)＋宜興供春壺|江湖聲望+800",
+    "【終極傳奇・全店包軌總裁圓夢套餐】|168888|150000|含：帝王血紅龍王(F24)＋血玉皇＋雙層瀑布透明罩苔蘚缸＋比賽茶王|最高榮耀通關・聲望+1500"
+  ]
+};
+
+// 自動解壓縮生成 102 項標準商品物件陣列
+const ITEMS = [];
+const PFX = { TEA:'T', WARE:'W', PLANT:'P', FISH:'F', BUNDLE:'B' };
+Object.keys(RAW_DB).forEach(cat => {
+  RAW_DB[cat].forEach((row, i) => {
+    const [name, nt, coin, desc, buff] = row.split('|');
+    const id = PFX[cat] + String(i + 1).padStart(2, '0');
+    ITEMS.push({ id, cat, name, nt: +nt, coin: +coin, desc, buff });
+  });
+});
+
+// 8大塔羅NPC委託壓縮表
+const QUESTS = [
+  ["Ⅰ.魔術師","✨","短影音創作者・阿凱","想找「底附2條螢光魚的水生植物」或「$300梨山茶包」提神拍片！",["P01","P02","P03","P04","P05","P06","T01","T02","T03","B01","B03"],850,25],
+  ["Ⅲ.皇后","🌿","室內設計師・Mia","佈置陽光溫室茶席，急需造景師「透明罩苔蘚觀景缸」或「白瓷/汝窯茶杯」！",["P07","P08","P09","P10","P11","P12","P13","W08","W10","B04","B07"],2200,45],
+  ["Ⅹ.命運之輪","🎡","熱炒店老闆・阿發哥","聽說養魚倉庫有超會生小魚的「$50 孔雀航母」與「發財樹」，想買來旺分店！",["F12","F13","P14","P15","P16","B02"],1600,35],
+  ["Ⅳ.皇帝","👑","粗獷營造大亨・海派龍哥","外表粗獷但極懂茶！指名要「中國宜興紫砂壺」配「台中梨山高海拔好茶」！",["W13","W14","W15","W16","W17","W18","W19","W20","W21","W22","T14","T17","T18","T20","B06","B10"],6500,90],
+  ["Ⅶ.戰車","🔥","物流車隊總裁・彪哥","火氣太旺！風水師叫他去養魚倉庫請一條通紅如玉的「鴻運血玉」或「大發財樹」！",["F17","F18","F19","P16","B09"],9500,120],
+  ["Ⅸ.隱者","🏮","古董名器藏家・沈老","考驗你對「宜興名家紫砂壺」、「20年梨山老茶」或「真柏盆景」的鑑賞力！",["T19","T21","T22","W18","W19","W20","W21","W22","P21","P22"],14000,160],
+  ["Ⅺ.力量","🦁","寵女企業家・霸天哥","想在公司養霸氣「龍魚(F21~F24)」，又想買水族館「$5~$10小魚(F01~F05)」給女兒！",["F21","F22","F23","F24","F01","F02","F03","F04","F05"],25000,220],
+  ["ⅩⅪ.世界","🌍","跨國集團創辦人・陳老董","終極委託！想一次鑑藏「頂級紅龍魚」、「梨山比賽茶王」與「瀑布透明罩苔蘚缸」！",["F23","F24","T22","P13","B11","B12"],88000,500]
+];
+
+const QUIZZES = [
+  ["Q1：店內人氣「水生植物生態共生瓶」瓶底特別附了幾條什麼魚？",["A. 附 2 條靈動的螢光魚","B. 附 10 條鯊魚","C. 沒有附魚"],0],
+  ["Q2：店內從 $300 茶包到上萬元頂級茶葉，主要產自台灣哪個高山茶區？",["A. 台中梨山茶區(福壽山/華崗等)","B. 沙漠仙人掌茶","C. 平地進口碎茶"],0],
+  ["Q3：粗獷沉穩的大哥最愛的茶壺，是正宗中國哪裡產的雙氣孔紫砂壺？",["A. 中國江蘇宜興","B. 塑膠射出廠","C. 鐵工廠"],0],
+  ["Q4：養魚倉庫裡 $50 一條、體型巨大超會生小魚的招牌種母叫什麼？",["A. 霸氣「孔雀航母」","B. 翻車魚","C. 鯨魚"],0]
+];
+
+// ============================================================================
+// 遊戲狀態與核心互動
+// ============================================================================
+let S = { coins:500, sta:100, rep:10, inv:['T01','P01','F01'], cart:[], vip:false, scene:'street', qIdx:null, fry:2, pat:10, zIdx:0 };
+try { const sv = localStorage.getItem('TF_SAVE_V2'); if(sv) S = {...S, ...JSON.parse(sv)}; } catch(e){}
+
+function toast(m){ const t=document.getElementById('toast'); t.innerHTML=m; t.style.display='block'; clearTimeout(window._tt); window._tt=setTimeout(()=>t.style.display='none',3500); }
+function sync(){
+  document.getElementById('s-coin').innerText = S.coins.toLocaleString();
+  document.getElementById('s-sta').innerText = S.sta;
+  document.getElementById('s-rep').innerText = S.rep.toLocaleString();
+  document.getElementById('s-col').innerText = `${new Set(S.inv).size}/102`;
+  document.getElementById('s-cart').innerText = S.cart.length;
+  document.getElementById('l-fry').innerText = S.fry;
+  document.getElementById('l-pat').innerText = S.pat + '%';
+  document.getElementById('lv-txt').innerText = S.rep>=800?'Lv.5 傳奇收藏大亨':S.rep>=300?'Lv.4 風水生態名家':S.rep>=100?'Lv.3 大哥指定買手':S.rep>=40?'Lv.2 巷弄尋寶客':'Lv.1 都市新居民';
+  try{ localStorage.setItem('TF_SAVE_V2', JSON.stringify(S)); }catch(e){}
+}
+
+// 孔雀航母自動繁殖 & 螢光魚水生瓶被動收入
+setInterval(()=>{
+  const carriers = S.inv.filter(x=>x==='F12'||x==='F13'||x==='B02').length;
+  if(carriers>0) S.fry += carriers * 2;
+  const bottles = S.inv.filter(x=>['P01','P02','P03','P04','P05','P06','B01','B03'].includes(x)).length;
+  if(bottles>0) S.coins += bottles * 15;
+  sync();
+}, 12000);
+
+// 商城系統
+let sMode = 'coin', sCat = 'ALL';
+function openShop(m){ if(m) switchMode(m); openModal('m-shop'); renderShop(); }
+function openModal(id){ document.getElementById(id).classList.add('open'); if(id==='m-tarot') renderTarot(); if(id==='m-live') renderQuiz(); }
+function closeM(id){ document.getElementById(id).classList.remove('open'); }
+function switchMode(m){
+  sMode = m;
+  document.getElementById('cart-bar').style.display = m==='real'?'flex':'none';
+  updateCartUI(); renderShop();
+}
+function setCat(c, btn){
+  sCat = c;
+  btn.parentElement.querySelectorAll('.btn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act'); renderShop();
+}
+function renderShop(){
+  const q = (document.getElementById('q-inp').value||'').toLowerCase();
+  const list = ITEMS.filter(p => (sCat==='ALL'||p.cat===sCat) && (!q || p.name.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q) || p.id.toLowerCase().includes(q)));
+  document.getElementById('p-grid').innerHTML = list.map(p => {
+    const cnt = S.inv.filter(x=>x===p.id).length;
+    return `<div class="card">
+      ${cnt?`<span class="badge">已收藏×${cnt}</span>`:''}
+      <div>
+        <div style="font-size:.7rem;color:#999">[${p.id}]</div>
+        <div style="font-weight:700;font-size:.9rem;margin:3px 0;color:#f5ece2">${p.name}</div>
+        <div style="font-size:.75rem;color:#bfb0a0;margin-bottom:6px">${p.desc}</div>
+        <div style="font-size:.72rem;color:var(--gold);background:rgba(230,179,71,0.12);padding:4px 6px;border-radius:5px;margin-bottom:8px">✨ ${p.buff}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <b style="color:${sMode==='coin'?'var(--gold)':'#8ce6a5'}">${sMode==='coin'?'🪙 $'+p.coin.toLocaleString():'NT$ '+p.nt.toLocaleString()}</b>
+        <button class="btn" style="background:${sMode==='coin'?'var(--grn)':'var(--aqua)'}" onclick="${sMode==='coin'?`buyCoin('${p.id}')`:`addCart('${p.id}')`}">${sMode==='coin'?'金幣購入':'＋購物車'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function buyCoin(id){
+  const p = ITEMS.find(x=>x.id===id);
+  if(S.coins < p.coin) return toast(`❌ 金幣不足！還差 $${(p.coin-S.coins).toLocaleString()}，快去抽塔羅解任務或看直播搶紅包！`);
+  S.coins -= p.coin; S.inv.push(id);
+  const r = Math.max(5, Math.round(p.coin/100)); S.rep += r;
+  if(p.cat==='TEA') S.sta = 100;
+  sync(); renderShop(); if(S.scene==='loft') build3D('loft');
+  toast(`🎉 成功購入【<b>${p.name}</b>】！已擺入你的 3D 小窩，聲望 +${r}！`);
+}
+function addCart(id){ S.cart.push(id); sync(); updateCartUI(); toast(`🛒 已加入真實購物車！`); }
+function updateCartUI(){
+  const arr = S.cart.map(id=>ITEMS.find(x=>x.id===id)).filter(Boolean);
+  const raw = arr.reduce((a,b)=>a+b.nt, 0);
+  document.getElementById('c-cnt').innerText = arr.length;
+  document.getElementById('c-sum').innerText = (S.vip?Math.round(raw*0.85):raw).toLocaleString();
+  document.getElementById('c-vip').innerText = S.vip?'(已套用VIP 85折碼 LISHAN888)':'';
+}
+function useVip(){ S.vip = true; updateCartUI(); toast('🎟️ 已套用遊戲專屬 VIP 85 折優惠碼！'); }
+function checkout(){
+  if(!S.cart.length) return toast('購物車是空的喔！');
+  alert(`✅【品牌真錢商城・訂單成功】\n共選購 ${S.cart.length} 件商品，折扣後總計 NT$ ${document.getElementById('c-sum').innerText}\n系統已生成預訂編號 #TF-${Math.floor(1000+Math.random()*9000)}，可截圖私訊店家直播間出貨！`);
+  S.cart = []; sync(); updateCartUI();
+}
+
+// 塔羅與任務
+function renderTarot(){
+  document.getElementById('t-grid').innerHTML = QUESTS.map((q,i)=>`
+    <div class="card" style="cursor:pointer;text-align:center;border-color:#b388eb" onclick="pickQuest(${i})">
+      <div style="font-size:2rem">${q[1]}</div>
+      <b style="color:var(--gold);margin:4px 0">${q[0]}</b>
+      <div style="font-size:.8rem;color:#e2d1f0;margin-bottom:6px">👤 ${q[2]}</div>
+      <div style="font-size:.74rem;color:#bbb;margin-bottom:8px">${q[3]}</div>
+      <b style="font-size:.76rem;color:#8ce6a5">賞金 +$${q[5].toLocaleString()}｜聲望 +${q[6]}</b>
+    </div>
+  `).join('');
+}
+function pickQuest(i){
+  S.qIdx = i; const q = QUESTS[i];
+  document.getElementById('q-tag').innerText = q[0];
+  document.getElementById('q-desc').innerHTML = `<b>【${q[2]}】</b><br>${q[3]}<br><span style="color:#ffd666">需要商品編號含：${q[4].slice(0,5).join('/')} 等</span>`;
+  closeM('m-tarot'); toast(`🔮 抽出【${q[0]}】！已觸發「<b>${q[2]}</b>」的尋寶委託！`);
+}
+function finishQuest(){
+  if(S.qIdx===null) return openModal('m-tarot');
+  const q = QUESTS[S.qIdx];
+  if(!q[4].some(req => S.inv.includes(req))){
+    toast(`⚠️ 尚未擁有【${q[2]}】指定的商品（如 ${q[4].slice(0,4).join(', ')}），請先去商城採購！`);
+    return openShop('coin');
+  }
+  const bonus = 1 + (S.inv.includes('P16')?0.15:0) + (S.pat/200);
+  const win = Math.round(q[5] * bonus);
+  S.coins += win; S.rep += q[6]; S.qIdx = null; sync();
+  document.getElementById('q-tag').innerText = '已完成';
+  document.getElementById('q-desc').innerText = '委託圓滿完成！請再次點擊【🔮 塔羅抽牌】召喚下一位委託人！';
+  toast(`🎊 成功交付【${q[2]}】委託！獲得賞金 <b>+$${win.toLocaleString()}</b> 與聲望 +${q[6]}！`);
+}
+
+// 直播與小窩養成
+function renderQuiz(){
+  const z = QUIZZES[S.zIdx % QUIZZES.length];
+  document.getElementById('lz-q').innerText = z[0];
+  document.getElementById('lz-opts').innerHTML = z[1].map((o,i)=>`<button class="btn" style="text-align:left" onclick="ansQuiz(${i})">${o}</button>`).join('');
+}
+function ansQuiz(i){
+  if(i===0){ S.coins+=350; S.rep+=15; S.vip=true; S.zIdx++; sync(); renderQuiz(); toast('🎉 答對了！獲得直播紅包 +$350 金幣 & 真錢商城 85 折 VIP 券！'); }
+  else toast('🤔 再想一下喔！答案就在題目細節裡！');
+}
+function liveAct(c, msg){ S.coins+=c; S.rep+=8; sync(); toast(msg); }
+function sellFry(){
+  if(!S.fry) return toast('目前沒有待售小魚！去商城買「$50 孔雀航母(F12/F13)」就會自動生小魚喔！');
+  const gain = S.fry * 85; S.coins += gain; S.fry = 0; S.rep += 10; sync();
+  toast(`💰 已將繁殖的小孔雀魚賣給合作水族館，賺取 <b>+$${gain.toLocaleString()}</b>！`);
+}
+function brewTea(){ S.sta=100; S.pat=Math.min(100,S.pat+12); S.coins+=100; S.rep+=10; sync(); toast(`🍵 用宜興紫砂壺沖泡台中梨山茶！體力全滿，壺身包漿度升至 ${S.pat}%！`); }
+function carePlant(){ S.coins+=110; S.rep+=8; sync(); toast('💧 已為透明罩苔蘚缸噴霧並點亮水生植物底部的 2 條螢光魚，獲得 +$110！'); }
+
+// 一鍵下載自己成為 index.html 檔案
+function downloadSelf(){
+  const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+  const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "index.html";
+  a.click();
+  toast("💾 已自動下載 index.html！可直接雙擊開啟或上傳 GitHub Pages！");
+}
+
+// ============================================================================
+// 【演算法 2：程序化 3D 實體合成器】極簡公式生成四大 3D 場景、鎮店大魚缸與游動魚群
+// ============================================================================
+let scene, cam, ren, player, grp, fishes=[], zones=[], keys={}, camAng=0, camDist=19;
+function init3D(){
+  scene = new THREE.Scene();
+  cam = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 150);
+  ren = new THREE.WebGLRenderer({antialias:true});
+  ren.setSize(innerWidth, innerHeight);
+  document.getElementById('canvas-box').appendChild(ren.domElement);
+
+  scene.add(new THREE.AmbientLight(0xffeedd, 0.7));
+  const dl = new THREE.DirectionalLight(0xfff0dd, 0.9); dl.position.set(10,20,12); scene.add(dl);
+  grp = new THREE.Group(); scene.add(grp);
+
+  // 主角模型
+  player = new THREE.Group();
+  const b = new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.55,1.4,12), new THREE.MeshStandardMaterial({color:0x3b6e4c})); b.position.y=0.7;
+  const h = new THREE.Mesh(new THREE.SphereGeometry(0.4,12,12), new THREE.MeshStandardMaterial({color:0xf2d2b6})); h.position.y=1.7;
+  player.add(b, h); scene.add(player);
+
+  build3D('street');
+
+  window.onkeydown = e => keys[e.key.toLowerCase()] = true;
+  window.onkeyup = e => keys[e.key.toLowerCase()] = false;
+  window.onresize = () => { cam.aspect=innerWidth/innerHeight; cam.updateProjectionMatrix(); ren.setSize(innerWidth,innerHeight); };
+
+  let drag=false, px=0;
+  ren.domElement.onmousedown = e => { drag=true; px=e.clientX; };
+  window.onmouseup = () => drag=false;
+  window.onmousemove = e => { if(drag){ camAng -= (e.clientX-px)*0.007; px=e.clientX; } };
+
+  const rc = new THREE.Raycaster(), ms = new THREE.Vector2();
+  ren.domElement.onclick = e => {
+    ms.x = (e.clientX/innerWidth)*2-1; ms.y = -(e.clientY/innerHeight)*2+1;
+    rc.setFromCamera(ms, cam);
+    const hit = rc.intersectObjects(zones, true)[0];
+    if(hit && hit.object.userData.fn) hit.object.userData.fn();
+  };
+
+  let t = 0;
+  (function loop(){
+    requestAnimationFrame(loop); t += 0.025;
+    if(keys.w||keys.arrowup) player.position.z -= 0.14;
+    if(keys.s||keys.arrowdown) player.position.z += 0.14;
+    if(keys.a||keys.arrowleft) player.position.x -= 0.14;
+    if(keys.d||keys.arrowright) player.position.x += 0.14;
+    player.position.x = Math.max(-12, Math.min(12, player.position.x));
+    player.position.z = Math.max(-10, Math.min(10, player.position.z));
+
+    fishes.forEach((f,i)=>{
+      f.m.position.x = f.cx + Math.sin(t*f.sp+i)*f.rx;
+      f.m.position.y = f.cy + Math.cos(t*f.sp+i)*0.3;
+      f.m.rotation.y = Math.cos(t*f.sp+i)>0 ? 0 : Math.PI;
+    });
+
+    cam.position.lerp(new THREE.Vector3(player.position.x+Math.sin(camAng)*camDist, 12, player.position.z+Math.cos(camAng)*camDist), 0.1);
+    cam.lookAt(player.position.x, 1.2, player.position.z);
+    ren.render(scene, cam);
+  })();
+}
+
+function addBox(x,y,z,w,h,d,col,op,fn){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshStandardMaterial({color:col,transparent:op<1,opacity:op,roughness:0.3}));
+  m.position.set(x,y,z); grp.add(m);
+  if(fn){ m.userData.fn = fn; zones.push(m); }
+  return m;
+}
+function addFish(cx,cy,cz,rx,col,sc){
+  const g = new THREE.ConeGeometry(0.22*sc, 0.75*sc, 8); g.rotateZ(Math.PI/2);
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({color:col,emissive:col,emissiveIntensity:0.4}));
+  m.position.set(cx,cy,cz); grp.add(m);
+  fishes.push({m, cx, cy, rx, sp:1+Math.random()});
+}
+
+function setScene(sc){
+  S.scene = sc;
+  ['street','store','warehouse','loft'].forEach(k=>document.getElementById('b-'+k).classList.toggle('act',k===sc));
+  player.position.set(0,0,5); build3D(sc);
+}
+
+function build3D(sc){
+  while(grp.children.length) grp.remove(grp.children[0]);
+  fishes=[]; zones=[];
+  const fCols = {street:0x221f26, store:0x5c3e2b, warehouse:0x13222b, loft:0x6e4f3a};
+  scene.background = new THREE.Color(fCols[sc]);
+  addBox(0,-0.1,0, 28,0.2,24, fCols[sc], 1);
+
+  if(sc==='street'){
+    addBox(-6,1.8,-2, 3.5,3.6,3.5, 0x6a359c, 1, ()=>openModal('m-tarot')); // 塔羅占卜攤
+    addBox(6,1.2,-2, 3.8,1.6,2.2, 0x111111, 1, ()=>finishQuest());         // 大哥黑頭車與委託交付
+    addBox(4,0.9,-2, 1.0,1.8,1.0, 0xc93b3b, 1, ()=>finishQuest());         // 海派大哥龍哥NPC
+    addBox(0,2.5,-8, 8,5,1.5, 0x8a5a36, 1, ()=>setScene('store'));         // 進入木質旗艦店
+  } else if(sc==='store'){
+    // 中央鎮店巨型觀賞大魚缸 (純觀賞非賣，內有紅龍魚與血玉)
+    addBox(0,2.0,-3, 7,3.4,2.4, 0x38b6ff, 0.38, ()=>toast('🐟【鎮店觀賞大魚缸(非賣品)】霸氣紅龍魚與血玉悠游其中！想買魚請點商城或去後巷養魚倉庫！'));
+    addFish(0,2.3,-3, 2.3, 0xff2200, 1.7); addFish(-1,1.5,-3, 1.8, 0xff5533, 1.2); addFish(1,1.9,-3, 2.0, 0xffbb00, 1.3);
+    // 左：梨山茶與中國宜興紫砂壺木質茶席
+    addBox(-7,0.7,1, 4.2,1.4,2.2, 0x8a5a36, 1, ()=>{openShop('coin');setCat('TEA',document.querySelectorAll('#m-shop .btn')[2]);});
+    addBox(-7,1.6,1, 0.8,0.6,0.8, 0x8c2d19, 1, ()=>openShop('coin'));
+    // 右：合作造景師透明罩苔蘚觀景缸 + 水生植物(底附2條螢光魚) + 發財樹
+    addBox(7,0.7,1, 4.2,1.4,2.2, 0x3b6e4c, 1, ()=>{openShop('coin');setCat('PLANT',document.querySelectorAll('#m-shop .btn')[4]);});
+    addBox(7,1.8,1, 1.5,1.5,1.5, 0xaaffcc, 0.45, ()=>openShop('coin'));
+    addFish(7,1.4,1, 0.4, 0x00ffcc, 0.45); addFish(7,1.6,1, 0.4, 0xff44ff, 0.45);
+    // 前：直播與短影音工作台
+    addBox(-7,1.6,-4.5, 1.4,3.2,1.4, 0xff4d4f, 1, ()=>openModal('m-live'));
+  } else if(sc==='warehouse'){
+    // 後巷養魚倉庫與合作水族館($5小魚 / $50孔雀航母 / 血玉與紅龍魚)
+    [[-6,0x00e5ff,0x55ffff,0.6],[0,0x2ca8c2,0xffaaff,1.1],[6,0x4a1c1c,0xff2200,1.7]].forEach(([x,c,fc,s])=>{
+      addBox(x,1.6,-3, 4.5,3.2,2.2, c, 0.45, ()=>openShop('coin'));
+      addFish(x,1.8,-3, 1.5, fc, s); addFish(x,1.2,-3, 1.3, 0xffdd44, s*0.8);
+    });
+  } else if(sc==='loft'){
+    // 我的木質小窩：動態展示已購買的茶席、魚缸與透明罩苔蘚螢光魚
+    addBox(0,0.6,0, 4,1.2,2.2, 0x5c3e2b, 1, ()=>openModal('m-loft'));
+    addBox(-0.6,1.4,0, 0.7,0.6,0.7, 0x9e3b24, 1, ()=>openModal('m-loft'));
+    addBox(-6,1.5,-2, 5,3,2, 0x2ca8c2, 0.4, ()=>openModal('m-loft'));
+    S.inv.filter(id=>id.startsWith('F')||id.startsWith('B')).slice(0,10).forEach((id,i)=>{
+      const big = ['F21','F22','F23','F24','B11','B12'].includes(id);
+      addFish(-6, 0.9+(i%4)*0.45, -2, 1.6, big?0xff1e00:0x40e0d0, big?1.5:0.75);
+    });
+    addBox(6,1.5,-2, 2.2,3,2.2, 0x3b8c4c, 0.5, ()=>openModal('m-loft'));
+    addFish(6,0.8,-2, 0.5, 0x00ffaa, 0.45); addFish(6,1.0,-2, 0.5, 0xff66ff, 0.45);
+  }
+}
+
+window.onload = () => { sync(); init3D(); };
+</script>
+</body>
+</html>
